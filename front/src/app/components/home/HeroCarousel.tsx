@@ -10,6 +10,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import 'swiper/css/effect-fade';
+import { useNavigationContext } from '@/app/providers';
 
 // 轮播图数据
 const carouselItems = [
@@ -43,6 +44,14 @@ const carouselItems = [
 ];
 
 export default function HeroCarousel() {
+  const { setSourceRect } = useNavigationContext();
+
+  // 记录点击位置
+  const handleNavigationClick = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSourceRect(rect);
+  };
+  
   return (
     <section className="relative w-full h-[500px] sm:h-[600px] overflow-hidden bg-white dark:bg-content transition-colors duration-300">
       <Swiper
@@ -76,7 +85,7 @@ export default function HeroCarousel() {
             </div>
             
             {/* 内容 */}
-            <motion.div 
+            <motion.div
               className="relative h-full flex flex-col justify-center items-center text-center px-4 md:px-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -93,6 +102,7 @@ export default function HeroCarousel() {
                   className={`px-6 py-3 rounded-full bg-gradient-to-r ${item.color} text-white font-semibold shadow-lg`}
                   whileHover={{ scale: 1.05, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={handleNavigationClick}
                 >
                   {item.linkText}
                 </motion.button>

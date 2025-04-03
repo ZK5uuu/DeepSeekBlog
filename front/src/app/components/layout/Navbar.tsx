@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { FaSun, FaMoon, FaBook, FaFilm, FaMusic, FaPen } from 'react-icons/fa';
 import { HiMenuAlt3, HiX } from 'react-icons/hi';
+import { useNavigationContext } from '@/app/providers';
 
 const navigation = [
   { name: '书籍', href: '/books', icon: <FaBook className="mr-2" /> },
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { setSourceRect } = useNavigationContext();
 
   // 初始化并监听深色模式状态
   useEffect(() => {
@@ -27,27 +29,25 @@ export default function Navbar() {
   }, []);
 
   const toggleMenu = () => setIsOpen(!isOpen);
-  
-  // 直接操作DOM切换深色模式
+
+  // 记录点击位置函数
+  const handleNavigationClick = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSourceRect(rect);
+  };
+
+  // 切换深色模式
   const toggleDarkMode = () => {
-    if (document.documentElement.classList.contains('dark')) {
-      // 切换前临时禁用过渡效果
-      document.documentElement.classList.add('notransition');
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setDarkMode(false);
-      // 强制重排以立即应用样式变化
-      window.getComputedStyle(document.documentElement).backgroundColor;
-      document.documentElement.classList.remove('notransition');
-    } else {
-      // 切换前临时禁用过渡效果
-      document.documentElement.classList.add('notransition');
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    
+    // 更新HTML类名和本地存储
+    if (newMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
-      setDarkMode(true);
-      // 强制重排以立即应用样式变化
-      window.getComputedStyle(document.documentElement).backgroundColor;
-      document.documentElement.classList.remove('notransition');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
   };
 
@@ -61,7 +61,7 @@ export default function Navbar() {
       <div className="container-custom py-4">
         <div className="flex justify-between items-center">
           {/* 网站标志 */}
-          <Link href="/">
+          <Link href="/" onClick={handleNavigationClick}>
             <motion.div 
               className="flex items-center"
               whileHover={{ scale: 1.05 }}
@@ -76,7 +76,7 @@ export default function Navbar() {
           {/* 桌面导航链接 */}
           <div className="hidden md:flex items-center space-x-1">
             {navigation.map((item) => (
-              <Link key={item.name} href={item.href}>
+              <Link key={item.name} href={item.href} onClick={handleNavigationClick}>
                 <motion.span 
                   className="nav-link flex items-center"
                   whileHover={{ scale: 1.05 }}
@@ -104,55 +104,67 @@ export default function Navbar() {
           </div>
 
           {/* 移动端菜单按钮 */}
-          <div className="md:hidden flex items-center">
-            {mounted && (
-              <button
-                className="theme-toggle-btn mr-2 focus:outline-none"
-                onClick={toggleDarkMode}
-                aria-label="切换深色模式"
-              >
-                {darkMode ? (
-                  <FaSun className="text-yellow-400" />
-                ) : (
-                  <FaMoon className="text-blue-600" />
-                )}
-              </button>
-            )}
-            
-            <button 
+          <div className="md:hidden">
+            <button
               onClick={toggleMenu}
-              className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="focus:outline-none text-gray-700 dark:text-gray-300"
+              aria-label="打开菜单"
             >
               {isOpen ? <HiX size={24} /> : <HiMenuAlt3 size={24} />}
             </button>
           </div>
         </div>
-
-        {/* 移动端下拉菜单 */}
-        {isOpen && (
-          <motion.div 
-            className="md:hidden"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="py-2 space-y-1 border-t border-gray-200 dark:border-gray-700 mt-2">
-              {navigation.map((item) => (
-                <Link key={item.name} href={item.href}>
-                  <motion.div 
-                    className="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.icon} {item.name}
-                  </motion.div>
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        )}
       </div>
+      
+      {/* 移动端菜单 */}
+      <motion.div 
+        className="md:hidden"
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ 
+          height: isOpen ? 'auto' : 0,
+          opacity: isOpen ? 1 : 0
+        }}
+        transition={{ duration: 0.3 }}
+      >
+        {isOpen && (
+          <div className="container-custom py-4 space-y-3 border-t border-gray-200 dark:border-gray-800">
+            {navigation.map((item) => (
+              <Link 
+                key={item.name} 
+                href={item.href}
+                onClick={(e) => {
+                  handleNavigationClick(e);
+                  setIsOpen(false);
+                }}
+              >
+                <motion.div 
+                  className="nav-link flex items-center py-2"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {item.icon} {item.name}
+                </motion.div>
+              </Link>
+            ))}
+            
+            {/* 移动端主题切换 */}
+            {mounted && (
+              <div className="flex items-center py-2">
+                <button
+                  onClick={toggleDarkMode}
+                  className="flex items-center nav-link"
+                  aria-label="切换深色模式"
+                >
+                  {darkMode ? (
+                    <><FaSun className="mr-2 text-yellow-400" /> 亮色模式</>
+                  ) : (
+                    <><FaMoon className="mr-2 text-blue-600" /> 深色模式</>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
     </motion.nav>
   );
 } 

@@ -3,6 +3,8 @@ import "./globals.css";
 import Script from "next/script";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
+import Providers from "./providers";
+import PageTransition from "./components/ui/PageTransition";
 
 export const metadata: Metadata = {
   title: "知识分享博客",
@@ -42,11 +44,17 @@ export default function RootLayout({
           }} 
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-      </body>
+      <Providers>
+        <body className="min-h-screen flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+          <Navbar />
+          <main className="flex-grow">
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </main>
+          <Footer />
+        </body>
+      </Providers>
     </html>
   );
 }

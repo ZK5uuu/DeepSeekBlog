@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deepseek.blog.mapper.PostLikeMapper">
+    <resultMap id="postLikeResultMap" type="com.deepseek.blog.entity.PostLike">
+        <id column="post_id" property="postId"/>
+        <id column="user_id" property="userId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO post_likes (post_id, user_id)
+        VALUES (#{postId}, #{userId})
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM post_likes
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+
+    <select id="findByPostIdAndUserId" resultMap="postLikeResultMap">
+        SELECT * FROM post_likes
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </select>
+
+    <select id="countByPostId" resultType="int">
+        SELECT COUNT(*) FROM post_likes WHERE post_id = #{postId}
+    </select>
+
+    <select id="findPostIdsByUserId" resultType="int">
+        SELECT post_id FROM post_likes WHERE user_id = #{userId}
+    </select>
+</mapper>

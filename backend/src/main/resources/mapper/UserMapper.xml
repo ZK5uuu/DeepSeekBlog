@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deepseek.blog.mapper.UserMapper">
+    <resultMap id="userResultMap" type="com.deepseek.blog.entity.User">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="email" property="email"/>
+        <result column="password_hash" property="passwordHash"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="userResultMap">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="findByUsername" resultMap="userResultMap">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <select id="findByEmail" resultMap="userResultMap">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="findAll" resultMap="userResultMap">
+        SELECT * FROM users ORDER BY id DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, email, password_hash, avatar_url)
+        VALUES (#{username}, #{email}, #{passwordHash}, #{avatarUrl})
+    </insert>
+
+    <update id="update">
+        UPDATE users
+        SET username = #{username},
+            email = #{email},
+            password_hash = #{passwordHash},
+            avatar_url = #{avatarUrl},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+</mapper>

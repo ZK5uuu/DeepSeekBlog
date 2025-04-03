@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Tab } from '@headlessui/react';
 import { FaBook, FaFilm, FaMusic, FaArrowRight } from 'react-icons/fa';
+import { useNavigationContext } from '@/app/providers';
 
 // 示例数据 - 实际项目中应从API获取
 const books = [
@@ -103,34 +104,59 @@ const itemVariants = {
 };
 
 export default function FeaturedContent() {
+  const { setSourceRect } = useNavigationContext();
+
+  // 记录点击位置
+  const handleNavigationClick = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSourceRect(rect);
+  };
+
   return (
-    <section className="py-16 bg-gray-50 dark:bg-content transition-colors duration-300">
+    <section className="py-16 bg-white dark:bg-content">
       <div className="container-custom">
-        <h2 className="section-title text-center mb-12">本周精选</h2>
+        <h2 className="section-title text-center mb-10">每周精选</h2>
         
         <Tab.Group>
-          <Tab.List className="flex space-x-2 rounded-xl bg-white dark:bg-card p-1 max-w-md mx-auto mb-10 shadow">
-            {[
-              { name: '书籍', icon: <FaBook className="mr-2" /> },
-              { name: '电影', icon: <FaFilm className="mr-2" /> },
-              { name: '音乐', icon: <FaMusic className="mr-2" /> },
-            ].map((category) => (
-              <Tab
-                key={category.name}
-                className={({ selected }) =>
-                  `w-full py-3 text-sm font-medium leading-5 flex items-center justify-center transition-all duration-200 
-                  ${
-                    selected
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow rounded-lg'
-                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                  }`
-                }
-              >
-                {category.icon} {category.name}
-              </Tab>
-            ))}
+          <Tab.List className="flex space-x-1 bg-gray-100 dark:bg-card p-1 rounded-lg mb-6 max-w-md mx-auto">
+            <Tab
+              className={({ selected }) =>
+                `w-full py-2.5 text-sm font-medium rounded-md flex items-center justify-center transition-all ${
+                  selected
+                    ? 'bg-white dark:bg-content shadow text-blue-600 dark:text-blue-400'
+                    : 'hover:bg-white/[0.12] hover:text-blue-600 dark:hover:text-blue-400'
+                }`
+              }
+            >
+              <FaBook className="mr-2" />
+              书籍
+            </Tab>
+            <Tab
+              className={({ selected }) =>
+                `w-full py-2.5 text-sm font-medium rounded-md flex items-center justify-center transition-all ${
+                  selected
+                    ? 'bg-white dark:bg-content shadow text-blue-600 dark:text-blue-400'
+                    : 'hover:bg-white/[0.12] hover:text-blue-600 dark:hover:text-blue-400'
+                }`
+              }
+            >
+              <FaFilm className="mr-2" />
+              电影
+            </Tab>
+            <Tab
+              className={({ selected }) =>
+                `w-full py-2.5 text-sm font-medium rounded-md flex items-center justify-center transition-all ${
+                  selected
+                    ? 'bg-white dark:bg-content shadow text-blue-600 dark:text-blue-400'
+                    : 'hover:bg-white/[0.12] hover:text-blue-600 dark:hover:text-blue-400'
+                }`
+              }
+            >
+              <FaMusic className="mr-2" />
+              音乐
+            </Tab>
           </Tab.List>
-          
+
           <Tab.Panels className="mt-2">
             {/* 书籍面板 */}
             <Tab.Panel>
@@ -159,7 +185,7 @@ export default function FeaturedContent() {
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{book.title}</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">作者: {book.author}</p>
                       <p className="text-gray-700 dark:text-gray-300 mb-4">{book.description}</p>
-                      <Link href={`/books/${book.id}`}>
+                      <Link href={`/books/${book.id}`} onClick={handleNavigationClick}>
                         <span className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
                           了解更多 <FaArrowRight className="ml-1 text-sm" />
                         </span>
@@ -168,8 +194,9 @@ export default function FeaturedContent() {
                   </motion.div>
                 ))}
               </motion.div>
+              
               <div className="text-center mt-10">
-                <Link href="/books">
+                <Link href="/books" onClick={handleNavigationClick}>
                   <span className="btn-primary inline-flex items-center">
                     查看所有书籍 <FaArrowRight className="ml-2" />
                   </span>
@@ -204,7 +231,7 @@ export default function FeaturedContent() {
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{movie.title}</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">导演: {movie.director}</p>
                       <p className="text-gray-700 dark:text-gray-300 mb-4">{movie.description}</p>
-                      <Link href={`/movies/${movie.id}`}>
+                      <Link href={`/movies/${movie.id}`} onClick={handleNavigationClick}>
                         <span className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
                           了解更多 <FaArrowRight className="ml-1 text-sm" />
                         </span>
@@ -213,8 +240,9 @@ export default function FeaturedContent() {
                   </motion.div>
                 ))}
               </motion.div>
+              
               <div className="text-center mt-10">
-                <Link href="/movies">
+                <Link href="/movies" onClick={handleNavigationClick}>
                   <span className="btn-primary inline-flex items-center">
                     查看所有电影 <FaArrowRight className="ml-2" />
                   </span>
@@ -249,7 +277,7 @@ export default function FeaturedContent() {
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{item.title}</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">艺术家: {item.artist}</p>
                       <p className="text-gray-700 dark:text-gray-300 mb-4">{item.description}</p>
-                      <Link href={`/music/${item.id}`}>
+                      <Link href={`/music/${item.id}`} onClick={handleNavigationClick}>
                         <span className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
                           了解更多 <FaArrowRight className="ml-1 text-sm" />
                         </span>
@@ -258,8 +286,9 @@ export default function FeaturedContent() {
                   </motion.div>
                 ))}
               </motion.div>
+              
               <div className="text-center mt-10">
-                <Link href="/music">
+                <Link href="/music" onClick={handleNavigationClick}>
                   <span className="btn-primary inline-flex items-center">
                     查看所有音乐 <FaArrowRight className="ml-2" />
                   </span>

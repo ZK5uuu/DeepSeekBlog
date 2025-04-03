@@ -1,7 +1,18 @@
 'use client';
 
+import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 import { ThemeProvider } from 'next-themes';
-import { ReactNode, useEffect } from 'react';
+
+// 创建一个上下文来存储点击的源元素位置信息
+export const NavigationContext = createContext<{
+  sourceRect: DOMRect | null;
+  setSourceRect: (rect: DOMRect | null) => void;
+}>({
+  sourceRect: null,
+  setSourceRect: () => {},
+});
+
+export const useNavigationContext = () => useContext(NavigationContext);
 
 // 防止深色模式闪烁的脚本组件
 function DarkModeScript() {
@@ -21,7 +32,9 @@ function DarkModeScript() {
   return null;
 }
 
-export function Providers({ children }: { children: ReactNode }) {
+export default function Providers({ children }: { children: ReactNode }) {
+  const [sourceRect, setSourceRect] = useState<DOMRect | null>(null);
+
   return (
     <ThemeProvider 
       attribute="class" 
@@ -30,7 +43,9 @@ export function Providers({ children }: { children: ReactNode }) {
       storageKey="theme"
     >
       <DarkModeScript />
-      {children}
+      <NavigationContext.Provider value={{ sourceRect, setSourceRect }}>
+        {children}
+      </NavigationContext.Provider>
     </ThemeProvider>
   );
 } 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deepseek.blog.mapper.BlogPostMapper">
+    <resultMap id="blogPostResultMap" type="com.deepseek.blog.entity.BlogPost">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="author_id" property="authorId"/>
+        <result column="cover_image_url" property="coverImageUrl"/>
+        <result column="summary" property="summary"/>
+        <result column="content" property="content"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="blogPostResultMap">
+        SELECT * FROM blog_posts WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="blogPostResultMap">
+        SELECT * FROM blog_posts ORDER BY created_at DESC
+    </select>
+
+    <select id="findByAuthorId" resultMap="blogPostResultMap">
+        SELECT * FROM blog_posts WHERE author_id = #{authorId} ORDER BY created_at DESC
+    </select>
+
+    <select id="findByTagId" resultMap="blogPostResultMap">
+        SELECT bp.* FROM blog_posts bp
+                             JOIN post_tags pt ON bp.id = pt.post_id
+        WHERE pt.tag_id = #{tagId}
+        ORDER BY bp.created_at DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog_posts (title, author_id, cover_image_url, summary, content)
+        VALUES (#{title}, #{authorId}, #{coverImageUrl}, #{summary}, #{content})
+    </insert>
+
+    <update id="update">
+        UPDATE blog_posts
+        SET title = #{title},
+            cover_image_url = #{coverImageUrl},
+            summary = #{summary},
+            content = #{content},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM blog_posts WHERE id = #{id}
+    </delete>
+
+    <select id="countComments" resultType="int">
+        SELECT COUNT(*) FROM comments WHERE post_id = #{postId}
+    </select>
+
+    <select id="countLikes" resultType="int">
+        SELECT COUNT(*) FROM post_likes WHERE post_id = #{postId}
+    </select>
+</mapper>

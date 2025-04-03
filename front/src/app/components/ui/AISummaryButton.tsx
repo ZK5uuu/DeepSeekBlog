@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaRobot, FaSpinner } from 'react-icons/fa';
 import { IoCloseOutline } from 'react-icons/io5';
-import axios from 'axios';
+import { aiApi } from '@/app/api';
 
 interface AISummaryButtonProps {
   content: string;
   title: string;
+  postId: number;
 }
 
-export default function AISummaryButton({ content, title }: AISummaryButtonProps) {
+export default function AISummaryButton({ content, title, postId }: AISummaryButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [summary, setSummary] = useState('');
@@ -22,15 +23,25 @@ export default function AISummaryButton({ content, title }: AISummaryButtonProps
     setError('');
     
     try {
-      // 这里应该改为您实际的API端点
-      const response = await axios.post('/api/ai/summary', {
-        content,
-        title,
-        model: 'deepseek' // 指定使用deepseek模型
-      });
+      // 先尝试获取已有摘要
+      let summaryData;
+      try {
+        const response = await aiApi.getSummary(postId);
+        if (response.data) {
+          summaryData = response.data;
+        }
+      } catch (err) {
+        // 如果获取失败或不存在，则生成新的摘要
+        const response = await aiApi.generateSummary(postId);
+        summaryData = response.data;
+      }
       
-      setSummary(response.data.summary);
-      setShowSummary(true);
+      if (summaryData && summaryData.content) {
+        setSummary(summaryData.content);
+        setShowSummary(true);
+      } else {
+        throw new Error('未能获取摘要内容');
+      }
     } catch (err) {
       console.error('生成摘要时出错:', err);
       setError('生成摘要时发生错误，请稍后重试。');
