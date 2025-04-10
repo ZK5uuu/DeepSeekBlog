@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.deepseek.blog.mapper.TagMapper">
-    <resultMap id="tagResultMap" type="com.deepseek.blog.entity.Tag">
+<mapper namespace="com.chictemp.backend.mapper.TagMapper">
+    <resultMap id="tagResultMap" type="com.chictemp.backend.entity.Tag">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
         <result column="created_at" property="createdAt"/>

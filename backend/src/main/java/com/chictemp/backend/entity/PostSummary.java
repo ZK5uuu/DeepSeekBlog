@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 public class PostSummary {
     private Integer id;
     private Integer postId;
-    private String summaryText;
+    private String content;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

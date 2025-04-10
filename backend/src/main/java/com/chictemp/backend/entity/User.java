@@ -8,8 +8,8 @@ public class User {
     private Integer id;
     private String username;
     private String email;
-    private String passwordHash;
-    private String avatarUrl;
+    private String password;
+    private String avatar;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -2,18 +2,17 @@ package com.chictemp.backend.mapper;
 
 import com.chictemp.backend.entity.BlogPost;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
 public interface BlogPostMapper {
-    BlogPost findById(Integer id);
     List<BlogPost> findAll();
+    BlogPost findById(Integer id);
     List<BlogPost> findByAuthorId(Integer authorId);
     List<BlogPost> findByTagId(Integer tagId);
-    int insert(BlogPost blogPost);
-    int update(BlogPost blogPost);
-    int delete(Integer id);
+    void insert(BlogPost post);
+    void update(BlogPost post);
+    void delete(Integer id);
     int countComments(Integer postId);
     int countLikes(Integer postId);
 }

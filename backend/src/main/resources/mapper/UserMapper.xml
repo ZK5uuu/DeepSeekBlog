@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.deepseek.blog.mapper.UserMapper">
-    <resultMap id="userResultMap" type="com.deepseek.blog.entity.User">
+<mapper namespace="com.chictemp.backend.mapper.UserMapper">
+    <resultMap id="userResultMap" type="com.chictemp.backend.entity.User">
         <id column="id" property="id"/>
         <result column="username" property="username"/>
         <result column="email" property="email"/>
-        <result column="password_hash" property="passwordHash"/>
-        <result column="avatar_url" property="avatarUrl"/>
+        <result column="password_hash" property="password"/>
+        <result column="avatar_url" property="avatar"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
     </resultMap>
@@ -29,15 +29,15 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO users (username, email, password_hash, avatar_url)
-        VALUES (#{username}, #{email}, #{passwordHash}, #{avatarUrl})
+        VALUES (#{username}, #{email}, #{password}, #{avatar})
     </insert>
 
     <update id="update">
         UPDATE users
         SET username = #{username},
             email = #{email},
-            password_hash = #{passwordHash},
-            avatar_url = #{avatarUrl},
+            password_hash = #{password},
+            avatar_url = #{avatar},
             updated_at = NOW()
         WHERE id = #{id}
     </update>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.deepseek.blog.mapper.PostLikeMapper">
-    <resultMap id="postLikeResultMap" type="com.deepseek.blog.entity.PostLike">
+<mapper namespace="com.chictemp.backend.mapper.PostLikeMapper">
+    <resultMap id="postLikeResultMap" type="com.chictemp.backend.entity.PostLike">
         <id column="post_id" property="postId"/>
         <id column="user_id" property="userId"/>
         <result column="created_at" property="createdAt"/>

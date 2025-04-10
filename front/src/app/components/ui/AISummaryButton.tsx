@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaRobot, FaSpinner } from 'react-icons/fa';
+import { FaRobot, FaSpinner, FaLightbulb } from 'react-icons/fa';
 import { IoCloseOutline } from 'react-icons/io5';
 import { aiApi } from '@/app/api';
 
@@ -22,29 +22,47 @@ export default function AISummaryButton({ content, title, postId }: AISummaryBut
     setIsLoading(true);
     setError('');
     
+    console.log(`开始为文章 ID: ${postId} 生成摘要`);
+    console.log(`文章标题: ${title}`);
+    console.log(`文章内容长度: ${content.length} 字符`);
+    
     try {
       // 先尝试获取已有摘要
       let summaryData;
       try {
+        console.log(`尝试获取已有摘要, 请求URL: /deepseek/summary/${postId}`);
         const response = await aiApi.getSummary(postId);
-        if (response.data) {
+        console.log('获取摘要API响应:', response);
+        
+        if (response && response.data) {
           summaryData = response.data;
+          console.log("获取到已有摘要:", response.data);
         }
-      } catch (err) {
+      } catch (err: any) {
+        console.log(`获取已有摘要失败: ${err.message}`);
+        console.log("尝试生成新摘要...");
+        
         // 如果获取失败或不存在，则生成新的摘要
+        console.log(`生成新摘要, 请求URL: /deepseek/summary/${postId} (POST)`);
         const response = await aiApi.generateSummary(postId);
+        console.log('生成摘要API响应:', response);
+        
         summaryData = response.data;
+        console.log("生成新摘要成功:", response.data);
       }
       
       if (summaryData && summaryData.content) {
+        console.log(`摘要内容: ${summaryData.content}`);
         setSummary(summaryData.content);
         setShowSummary(true);
       } else {
+        console.error('摘要数据无效:', summaryData);
         throw new Error('未能获取摘要内容');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('生成摘要时出错:', err);
-      setError('生成摘要时发生错误，请稍后重试。');
+      console.error('错误详情:', err.response || err.message);
+      setError(`生成摘要时发生错误: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -55,8 +73,11 @@ export default function AISummaryButton({ content, title, postId }: AISummaryBut
       <motion.button
         onClick={generateSummary}
         disabled={isLoading}
-        className="flex items-center justify-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium shadow-md hover:shadow-lg"
-        whileHover={{ scale: 1.05 }}
+        className={`flex items-center justify-center px-4 py-2 rounded-full text-white font-medium shadow-md transition-all duration-300 ${
+          isLoading 
+            ? 'bg-gray-500 cursor-not-allowed' 
+            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:scale-105'
+        }`}
         whileTap={{ scale: 0.95 }}
       >
         {isLoading ? (
@@ -64,14 +85,24 @@ export default function AISummaryButton({ content, title, postId }: AISummaryBut
         ) : (
           <FaRobot className="mr-2" />
         )}
-        {isLoading ? '生成摘要中...' : 'AI总结'}
+        {isLoading ? '正在生成AI摘要...' : '30字极简解析'}
       </motion.button>
 
       {/* 错误提示 */}
       {error && (
-        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
-          {error}
-        </div>
+        <motion.div 
+          className="mt-4 p-4 bg-red-100 text-red-700 rounded-md"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-center">
+            <FaLightbulb className="mr-2" />
+            <div>
+              <p className="font-bold">摘要生成失败</p>
+              <p>{error}</p>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* 弹出的摘要窗口 */}
@@ -85,29 +116,36 @@ export default function AISummaryButton({ content, title, postId }: AISummaryBut
             onClick={() => setShowSummary(false)}
           >
             <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-xl w-full overflow-hidden"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">AI摘要</h3>
+              <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
+                <h3 className="text-lg font-bold flex items-center">
+                  <FaRobot className="mr-2" /> AI极简解析
+                </h3>
                 <button
                   onClick={() => setShowSummary(false)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="text-white hover:bg-white/20 p-1 rounded-full"
                 >
                   <IoCloseOutline size={24} />
                 </button>
               </div>
               <div className="p-6">
-                <div className="text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none">
-                  {summary.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-4">{paragraph}</p>
-                  ))}
+                <div className="flex justify-center">
+                  <div className="text-2xl font-bold text-center py-6 px-8 bg-gray-50 dark:bg-gray-900 rounded-lg max-w-md">
+                    {summary}
+                  </div>
                 </div>
-                <div className="mt-6 text-sm text-gray-500 dark:text-gray-400 italic">
-                  由 DeepSeek AI 模型生成的摘要
+                <div className="mt-6 flex items-center justify-between text-sm">
+                  <div className="text-gray-500 dark:text-gray-400 italic">
+                    由 DeepSeek AI 模型生成的30字极简解析
+                  </div>
+                  <div className="text-blue-500 cursor-pointer hover:underline">
+                    反馈
+                  </div>
                 </div>
               </div>
             </motion.div>

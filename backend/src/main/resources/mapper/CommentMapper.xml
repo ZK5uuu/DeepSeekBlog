@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.deepseek.blog.mapper.CommentMapper">
-    <resultMap id="commentResultMap" type="com.deepseek.blog.entity.Comment">
+<mapper namespace="com.chictemp.backend.mapper.CommentMapper">
+    <resultMap id="commentResultMap" type="com.chictemp.backend.entity.Comment">
         <id column="id" property="id"/>
         <result column="post_id" property="postId"/>
         <result column="user_id" property="userId"/>
         <result column="content" property="content"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
-        <association property="user" column="user_id" select="com.deepseek.blog.mapper.UserMapper.findById"/>
+        <association property="user" column="user_id" select="com.chictemp.backend.mapper.UserMapper.findById"/>
     </resultMap>
 
     <select id="findById" resultMap="commentResultMap">

@@ -12,6 +12,9 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config) => {
+    // 请求日志
+    console.log(`发送请求: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, config);
+    
     // 可以在这里添加认证Token等
     const token = localStorage.getItem('token');
     if (token) {
@@ -20,6 +23,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('请求拦截器错误:', error);
     return Promise.reject(error);
   }
 );
@@ -27,11 +31,14 @@ api.interceptors.request.use(
 // 响应拦截器
 api.interceptors.response.use(
   (response) => {
+    // 日志响应数据
+    console.log(`收到响应: ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+    
     // 处理响应数据
     const res = response.data;
     if (res.code && res.code !== 200) {
       // 根据后端约定的错误码进行处理
-      console.error(res.msg || '请求错误');
+      console.error(`请求错误 [${res.code}]: ${res.msg || '未知错误'}`);
       return Promise.reject(new Error(res.msg || '请求错误'));
     } else {
       return res;
@@ -40,6 +47,11 @@ api.interceptors.response.use(
   (error) => {
     // 处理响应错误
     console.error('请求失败', error);
+    if (error.response) {
+      console.error(`状态码: ${error.response.status}`, error.response.data);
+    } else if (error.request) {
+      console.error('请求已发出但没有收到响应', error.request);
+    }
     return Promise.reject(error);
   }
 );

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/deepseek")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class DeepSeekController {
     @Autowired
     private DeepSeekService deepSeekService;

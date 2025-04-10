@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 export default function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-content">
-      <HeroCarousel />
+      <HeroCarousel />{/* 轮播图 */}
       
       <FeaturedContent />
       

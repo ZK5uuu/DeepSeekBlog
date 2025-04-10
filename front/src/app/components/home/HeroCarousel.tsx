@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -11,41 +11,45 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import 'swiper/css/effect-fade';
 import { useNavigationContext } from '@/app/providers';
+import { FaBook, FaFilm, FaMusic } from 'react-icons/fa';
 
-// 轮播图数据
+// 更新后的轮播图数据
 const carouselItems = [
   {
     id: 1,
-    title: '探索书籍的奇妙世界',
-    description: '记录每周阅读，分享精彩书摘与感悟',
-    image: 'https://images.unsplash.com/photo-1526243741027-444d633d7365?q=80&w=1400',
+    title: '每周精选书籍',
+    description: '探索思想的海洋，发现知识的宝藏，每周为您推荐值得阅读的好书。',
+    image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1600',
     link: '/books',
     linkText: '浏览书籍',
     color: 'from-blue-600 to-indigo-600',
+    icon: FaBook
   },
   {
     id: 2,
-    title: '电影之旅',
-    description: '记录每周观影，探讨电影背后的思考',
-    image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1400',
+    title: '电影鉴赏',
+    description: '走进光影的世界，感受视觉的震撼，分享经典电影的艺术魅力与内涵。',
+    image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1600',
     link: '/movies',
-    linkText: '浏览电影',
-    color: 'from-purple-600 to-pink-600',
+    linkText: '查看影评',
+    color: 'from-red-600 to-pink-600',
+    icon: FaFilm
   },
   {
     id: 3,
-    title: '音乐之声',
-    description: '分享每周音乐推荐，记录音乐的感动瞬间',
-    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1400',
+    title: '音乐推荐',
+    description: '聆听心灵的声音，感受旋律的力量，发现打动人心的音乐作品。',
+    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1600',
     link: '/music',
-    linkText: '浏览音乐',
+    linkText: '探索音乐',
     color: 'from-green-600 to-teal-600',
-  },
+    icon: FaMusic
+  }
 ];
 
 export default function HeroCarousel() {
   const { setSourceRect } = useNavigationContext();
-
+  
   // 记录点击位置
   const handleNavigationClick = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -57,6 +61,7 @@ export default function HeroCarousel() {
       <Swiper
         spaceBetween={0}
         centeredSlides={true}
+        loop={true}
         autoplay={{
           delay: 5000,
           disableOnInteraction: false,
@@ -91,6 +96,9 @@ export default function HeroCarousel() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
             >
+              <div className={`text-5xl mb-6 bg-gradient-to-r ${item.color} p-5 rounded-full`}>
+                <item.icon />
+              </div>
               <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>
                 {item.title}
               </h1>
@@ -99,12 +107,12 @@ export default function HeroCarousel() {
               </p>
               <Link href={item.link}>
                 <motion.button
-                  className={`px-6 py-3 rounded-full bg-gradient-to-r ${item.color} text-white font-semibold shadow-lg`}
+                  className={`px-6 py-3 rounded-full bg-gradient-to-r ${item.color} text-white font-semibold shadow-lg flex items-center`}
                   whileHover={{ scale: 1.05, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleNavigationClick}
                 >
-                  {item.linkText}
+                  <item.icon className="mr-2" /> {item.linkText}
                 </motion.button>
               </Link>
             </motion.div>

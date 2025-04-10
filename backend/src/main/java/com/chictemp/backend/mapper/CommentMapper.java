@@ -8,9 +8,7 @@ import java.util.List;
 public interface CommentMapper {
     Comment findById(Integer id);
     List<Comment> findByPostId(Integer postId);
-    List<Comment> findByUserId(Integer userId);
-    int insert(Comment comment);
-    int update(Comment comment);
-    int delete(Integer id);
-    int countByPostId(Integer postId);
+    void insert(Comment comment);
+    void update(Comment comment);
+    void delete(Integer id);
 }

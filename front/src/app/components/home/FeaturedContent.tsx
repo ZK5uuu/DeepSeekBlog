@@ -1,85 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Tab } from '@headlessui/react';
 import { FaBook, FaFilm, FaMusic, FaArrowRight } from 'react-icons/fa';
 import { useNavigationContext } from '@/app/providers';
-
-// 示例数据 - 实际项目中应从API获取
-const books = [
-  {
-    id: 1,
-    title: '人类简史',
-    author: '尤瓦尔·赫拉利',
-    cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600',
-    description: '从人类起源到现代文明的演变，探讨我们如何走到今天。',
-  },
-  {
-    id: 2,
-    title: '原子习惯',
-    author: '詹姆斯·克利尔',
-    cover: 'https://images.unsplash.com/photo-1535398089889-dd807df1dfaa?q=80&w=600',
-    description: '如何养成良好习惯，戒除不良习惯的实用指南。',
-  },
-  {
-    id: 3,
-    title: '瓦尔登湖',
-    author: '亨利·戴维·梭罗',
-    cover: 'https://images.unsplash.com/photo-1476275466078-4007374efbbe?q=80&w=600',
-    description: '一部关于简单生活和自然和谐的杰作。',
-  },
-];
-
-const movies = [
-  {
-    id: 1,
-    title: '星际穿越',
-    director: '克里斯托弗·诺兰',
-    poster: 'https://images.unsplash.com/photo-1596727147705-61a532a659bd?q=80&w=600',
-    description: '一部关于爱、时间和宇宙的科幻巨作。',
-  },
-  {
-    id: 2,
-    title: '肖申克的救赎',
-    director: '弗兰克·德拉邦特',
-    poster: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=600',
-    description: '希望让人自由，讲述了一段不屈服于命运的旅程。',
-  },
-  {
-    id: 3,
-    title: '千与千寻',
-    director: '宫崎骏',
-    poster: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=600',
-    description: '少女千寻在异世界的奇幻冒险和成长故事。',
-  },
-];
-
-const music = [
-  {
-    id: 1,
-    title: '钢琴协奏曲第二号',
-    artist: '拉赫玛尼诺夫',
-    cover: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?q=80&w=600',
-    description: '一部充满激情和忧郁的古典音乐杰作。',
-  },
-  {
-    id: 2,
-    title: 'Abbey Road',
-    artist: '披头士',
-    cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=600',
-    description: '披头士乐队最具影响力的专辑之一。',
-  },
-  {
-    id: 3,
-    title: '四季',
-    artist: '维瓦尔第',
-    cover: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=600',
-    description: '描绘春夏秋冬四季更替的古典音乐名作。',
-  },
-];
 
 // 动画变体
 const containerVariants = {
@@ -105,12 +32,36 @@ const itemVariants = {
 
 export default function FeaturedContent() {
   const { setSourceRect } = useNavigationContext();
+  const [books, setBooks] = useState([]);
+  const [movies, setMovies] = useState([]);
+  const [music, setMusic] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 获取数据
+  useEffect(() => {
+    // 模拟API加载
+    setLoading(false);
+  }, []);
 
   // 记录点击位置
   const handleNavigationClick = (e: React.MouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setSourceRect(rect);
   };
+
+  // 加载状态渲染
+  if (loading) {
+    return (
+      <section className="py-16 bg-white dark:bg-content">
+        <div className="container-custom">
+          <h2 className="section-title text-center mb-10">每周精选</h2>
+          <div className="flex justify-center items-center h-64">
+            <p className="text-lg text-gray-500 dark:text-gray-400">正在加载内容...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 bg-white dark:bg-content">
@@ -166,33 +117,9 @@ export default function FeaturedContent() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                {books.map((book) => (
-                  <motion.div 
-                    key={book.id} 
-                    className="card bg-white dark:bg-card overflow-hidden border dark:border-gray-800"
-                    whileHover={{ y: -5 }}
-                  >
-                    <div className="relative h-64 w-full">
-                      <Image
-                        src={book.cover}
-                        alt={book.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{book.title}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">作者: {book.author}</p>
-                      <p className="text-gray-700 dark:text-gray-300 mb-4">{book.description}</p>
-                      <Link href={`/books/${book.id}`} onClick={handleNavigationClick}>
-                        <span className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
-                          了解更多 <FaArrowRight className="ml-1 text-sm" />
-                        </span>
-                      </Link>
-                    </div>
-                  </motion.div>
-                ))}
+                <div className="col-span-3 text-center py-10">
+                  <p className="text-gray-500 dark:text-gray-400">暂无书籍数据，请从数据库获取</p>
+                </div>
               </motion.div>
               
               <div className="text-center mt-10">
@@ -212,33 +139,9 @@ export default function FeaturedContent() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                {movies.map((movie) => (
-                  <motion.div 
-                    key={movie.id} 
-                    className="card bg-white dark:bg-card overflow-hidden border dark:border-gray-800"
-                    whileHover={{ y: -5 }}
-                  >
-                    <div className="relative h-64 w-full">
-                      <Image
-                        src={movie.poster}
-                        alt={movie.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{movie.title}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">导演: {movie.director}</p>
-                      <p className="text-gray-700 dark:text-gray-300 mb-4">{movie.description}</p>
-                      <Link href={`/movies/${movie.id}`} onClick={handleNavigationClick}>
-                        <span className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
-                          了解更多 <FaArrowRight className="ml-1 text-sm" />
-                        </span>
-                      </Link>
-                    </div>
-                  </motion.div>
-                ))}
+                <div className="col-span-3 text-center py-10">
+                  <p className="text-gray-500 dark:text-gray-400">暂无电影数据，请从数据库获取</p>
+                </div>
               </motion.div>
               
               <div className="text-center mt-10">
@@ -258,33 +161,9 @@ export default function FeaturedContent() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                {music.map((item) => (
-                  <motion.div 
-                    key={item.id} 
-                    className="card bg-white dark:bg-card overflow-hidden border dark:border-gray-800"
-                    whileHover={{ y: -5 }}
-                  >
-                    <div className="relative h-64 w-full">
-                      <Image
-                        src={item.cover}
-                        alt={item.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{item.title}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">艺术家: {item.artist}</p>
-                      <p className="text-gray-700 dark:text-gray-300 mb-4">{item.description}</p>
-                      <Link href={`/music/${item.id}`} onClick={handleNavigationClick}>
-                        <span className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
-                          了解更多 <FaArrowRight className="ml-1 text-sm" />
-                        </span>
-                      </Link>
-                    </div>
-                  </motion.div>
-                ))}
+                <div className="col-span-3 text-center py-10">
+                  <p className="text-gray-500 dark:text-gray-400">暂无音乐数据，请从数据库获取</p>
+                </div>
               </motion.div>
               
               <div className="text-center mt-10">

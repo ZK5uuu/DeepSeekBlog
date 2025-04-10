@@ -7,5 +7,6 @@ import java.time.LocalDateTime;
 public class Tag {
     private Integer id;
     private String name;
+    private String description;
     private LocalDateTime createdAt;
 }
