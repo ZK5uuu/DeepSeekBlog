@@ -4,7 +4,7 @@
     <resultMap id="postSummaryResultMap" type="com.chictemp.backend.entity.PostSummary">
         <id column="id" property="id"/>
         <result column="post_id" property="postId"/>
-        <result column="summary_text" property="summaryText"/>
+        <result column="content" property="content"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
     </resultMap>
@@ -18,13 +18,13 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO post_summaries (post_id, summary_text)
-        VALUES (#{postId}, #{summaryText})
+        INSERT INTO post_summaries (post_id, content)
+        VALUES (#{postId}, #{content})
     </insert>
 
     <update id="update">
         UPDATE post_summaries
-        SET summary_text = #{summaryText},
+        SET content = #{content},
             updated_at = NOW()
         WHERE id = #{id}
     </update>

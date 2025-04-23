@@ -9,7 +9,9 @@ public interface BlogPostService {
     List<BlogPost> findAll();
     List<BlogPost> findByAuthorId(Integer authorId);
     List<BlogPost> findByTagId(Integer tagId);
+    List<BlogPost> findByContentType(String contentType);
     BlogPost create(BlogPostRequest request, Integer authorId);
     BlogPost update(Integer id, BlogPostRequest request);
     boolean delete(Integer id);
+    Integer incrementViewCount(Integer id);
 }

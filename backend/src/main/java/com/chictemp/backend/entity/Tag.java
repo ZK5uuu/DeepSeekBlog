@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 public class Tag {
     private Integer id;
     private String name;
-    private String description;
     private LocalDateTime createdAt;
+    
+    // 非数据库字段
+    private Integer postCount; // 使用该标签的文章数量
 }

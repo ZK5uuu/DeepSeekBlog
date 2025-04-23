@@ -30,75 +30,90 @@ export const musicApi = {
   getMusicSample: (id) => api.get(`/music/${id}/sample`),
 };
 
-// 创建一些模拟数据，用于在后端API完成前测试
-export const mockMusic = [
+// 音乐模拟数据
+export const mockMusics = [
   {
     id: 1,
-    title: "春江花月夜",
-    artist: "李云迪",
-    year: 2008,
-    cover: "/images/music/moonlight.jpg",
-    description: "改编自唐代诗人张若虚的同名诗作，通过钢琴演奏展现出中国古典音乐的韵味与美感。",
-    rating: 9.5,
-    genre: ["古典", "钢琴", "中国风"],
-    sampleUrl: "https://music.163.com/song/media/outer/url?id=5264843.mp3"
+    title: "Shape of My Heart",
+    artist: "Sting",
+    year: 1993,
+    cover: "/music-covers/sting.jpg",
+    description: "优雅的吉他旋律和Sting富有情感的演唱，这首歌讲述了一个纸牌玩家在游戏中的哲学态度，以此作为人生隐喻。",
+    album: "Ten Summoner's Tales",
+    rating: 4.8,
+    genre: ["摇滚", "民谣"],
+    duration: "4:33",
+    sampleUrl: "https://music.example.com/sting/shape-of-my-heart"
   },
   {
     id: 2,
-    title: "梁祝",
-    artist: "吕思清",
-    year: 2002,
-    cover: "/images/music/butterfly-lovers.jpg",
-    description: "中国传统名曲，讲述了梁山伯与祝英台的爱情故事，被誉为'东方的罗密欧与朱丽叶'。",
-    rating: 9.7,
-    genre: ["古典", "小提琴", "交响乐"],
-    sampleUrl: "https://music.163.com/song/media/outer/url?id=5281339.mp3"
+    title: "Bohemian Rhapsody",
+    artist: "Queen",
+    year: 1975,
+    cover: "/music-covers/queen.jpg",
+    description: "这首六分钟的史诗般作品融合了歌剧、重金属和摇滚，被认为是Queen最具代表性的歌曲之一。",
+    album: "A Night at the Opera",
+    rating: 4.9,
+    genre: ["摇滚", "歌剧摇滚"],
+    duration: "5:55",
+    sampleUrl: "https://music.example.com/queen/bohemian-rhapsody"
   },
   {
     id: 3,
-    title: "夜曲",
-    artist: "周杰伦",
-    year: 2005,
-    cover: "/images/music/nocturne.jpg",
-    description: "周杰伦经典作品，歌曲以钢琴伴奏为主，讲述了一段忧伤的爱情故事。",
-    rating: 9.3,
-    genre: ["流行", "R&B", "情歌"],
-    sampleUrl: "https://music.163.com/song/media/outer/url?id=185815.mp3"
+    title: "Take Five",
+    artist: "Dave Brubeck",
+    year: 1959,
+    cover: "/music-covers/dave.jpg",
+    description: "爵士乐历史上最著名的作品之一，以其不寻常的5/4拍子和萨克斯风独奏而闻名于世。",
+    album: "Time Out",
+    rating: 4.7,
+    genre: ["爵士", "冷爵士"],
+    duration: "5:24",
+    sampleUrl: "https://music.example.com/dave-brubeck/take-five"
   },
   {
     id: 4,
-    title: "克罗地亚狂想曲",
-    artist: "马克西姆",
-    year: 2012,
-    cover: "/images/music/croatian-rhapsody.jpg",
-    description: "融合了克罗地亚民族音乐与古典钢琴的现代作品，热情奔放又不失优雅。",
-    rating: 9.0,
-    genre: ["现代", "钢琴", "世界音乐"],
-    sampleUrl: "https://music.163.com/song/media/outer/url?id=1843398057.mp3"
+    title: "Billie Jean",
+    artist: "Michael Jackson",
+    year: 1982,
+    cover: "/music-covers/mj.jpg",
+    description: "这首标志性的流行歌曲以其独特的贝斯线和MJ标志性的舞步而广为人知，也是他最具代表性的作品之一。",
+    album: "Thriller",
+    rating: 4.9,
+    genre: ["流行", "放克"],
+    duration: "4:54",
+    sampleUrl: "https://music.example.com/michael-jackson/billie-jean"
   },
   {
     id: 5,
-    title: "月光奏鸣曲",
-    artist: "贝多芬",
-    year: 1801,
-    cover: "/images/music/moonlight-sonata.jpg",
-    description: "贝多芬最著名的钢琴奏鸣曲之一，第一乐章以平静而忧伤的旋律著称。",
-    rating: 9.8,
-    genre: ["古典", "钢琴", "奏鸣曲"],
-    sampleUrl: "https://music.163.com/song/media/outer/url?id=5276933.mp3"
+    title: "Imagine",
+    artist: "John Lennon",
+    year: 1971,
+    cover: "/music-covers/lennon.jpg",
+    description: "这首充满和平与希望的钢琴民谣是列侬最著名的个人作品，呼吁人们想象一个和平的世界。",
+    album: "Imagine",
+    rating: 4.8,
+    genre: ["摇滚", "民谣"],
+    duration: "3:03",
+    sampleUrl: "https://music.example.com/john-lennon/imagine"
   },
   {
     id: 6,
-    title: "River Flows In You",
-    artist: "李闰珉",
-    year: 2011,
-    cover: "/images/music/river-flows.jpg",
-    description: "韩国作曲家李闰珉创作的钢琴曲，优美而富有感染力，被广泛用于影视作品。",
-    rating: 9.2,
-    genre: ["纯音乐", "钢琴", "现代"],
-    sampleUrl: "https://music.163.com/song/media/outer/url?id=4010197.mp3"
+    title: "Hotel California",
+    artist: "Eagles",
+    year: 1976,
+    cover: "/music-covers/eagles.jpg",
+    description: "这首充满神秘色彩的摇滚经典以其双重吉他独奏和隐喻性歌词著称，持续影响着几代音乐人。",
+    album: "Hotel California",
+    rating: 4.9,
+    genre: ["摇滚", "乡村摇滚"],
+    duration: "6:30",
+    sampleUrl: "https://music.example.com/eagles/hotel-california"
   }
 ];
+
+// 如果之前有 mockMusic 数组，保留它的兼容性
+export const mockMusic = mockMusics;
 
 // 导出中英文类型映射
 export const genreMapping = {

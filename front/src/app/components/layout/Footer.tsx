@@ -74,11 +74,6 @@ export default function Footer() {
                   <span className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">音乐</span>
                 </Link>
               </li>
-              <li>
-                <Link href="/blog">
-                  <span className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">博客</span>
-                </Link>
-              </li>
             </ul>
           </div>
           

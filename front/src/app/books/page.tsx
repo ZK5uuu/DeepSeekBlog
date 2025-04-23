@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { FaStar, FaSearch, FaFilter, FaBook, FaRegClock, FaUser, FaFlag } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaStar, FaSearch, FaFilter, FaBook, FaRegClock, FaUser, FaHeart, FaPen, FaPlus } from 'react-icons/fa';
 import { bookApi, mockBooks, genreMapping as importedGenreMapping } from '../api/services/bookService';
 
 // 类型定义
@@ -19,7 +19,9 @@ interface Book {
   genre: string[];
   pages: number;
   publisher: string;
-  isFlagged?: boolean;
+  isLiked?: boolean;
+  views?: number;
+  publishDate?: string;
 }
 
 // 定义genreMapping的接口类型，带有字符串索引签名
@@ -43,21 +45,29 @@ const container = {
 
 const item = {
   hidden: { y: 20, opacity: 0 },
-  show: { y: 0, opacity: 1 }
+  show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } }
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 0.6 } }
 };
 
 // BooksPage 组件： 这是整个页面的主组件，包含了所有的状态管理和子组件。
 export default function BooksPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'rating' | 'year'>('rating');
+  const [sortBy, setSortBy] = useState<'rating' | 'year' | 'views'>('rating');
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<string[]>([]);
   const [featuredBook, setFeaturedBook] = useState<Book | null>(null);
-  const [flaggedBooks, setFlaggedBooks] = useState<number[]>([]);
+  const [likedBooks, setLikedBooks] = useState<number[]>([]);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
+  const [showNewPostModal, setShowNewPostModal] = useState(false);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // useEffect 钩子 - 加载图书数据：
 
@@ -73,10 +83,21 @@ export default function BooksPage() {
           // 获取所有图书
           const response = await bookApi.getBookList({});
           if (response && response.data) {
-            setAllBooks(response.data);
+            // 为每个图书添加模拟的博客数据
+            const enhancedBooks = response.data.map((book: Book) => ({
+              ...book,
+              views: Math.floor(Math.random() * 1000),
+              publishDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            }));
+            setAllBooks(enhancedBooks);
           } else {
             // 如果API不可用，使用模拟数据
-            setAllBooks(mockBooks);
+            const enhancedMockBooks = mockBooks.map(book => ({
+              ...book,
+              views: Math.floor(Math.random() * 1000),
+              publishDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            }));
+            setAllBooks(enhancedMockBooks);
           }
           
           // 获取图书类型
@@ -92,30 +113,49 @@ export default function BooksPage() {
           // 获取精选图书
           const featuredResponse = await bookApi.getFeaturedBook();
           if (featuredResponse && featuredResponse.data) {
-            setFeaturedBook(featuredResponse.data);
+            setFeaturedBook({
+              ...featuredResponse.data,
+              views: Math.floor(Math.random() * 1000) + 500,
+              publishDate: new Date(Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            });
           } else {
             // 使用评分最高的图书作为精选
             const featured = mockBooks.reduce((prev, current) => 
               prev.rating > current.rating ? prev : current
             );
-            setFeaturedBook(featured);
+            setFeaturedBook({
+              ...featured,
+              views: Math.floor(Math.random() * 1000) + 500,
+              publishDate: new Date(Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            });
           }
         } catch (error) {
           console.log('API不可用，使用模拟数据', error);
           // 使用模拟数据
-          setAllBooks(mockBooks);
+          const enhancedMockBooks = mockBooks.map(book => ({
+            ...book,
+            views: Math.floor(Math.random() * 1000),
+            publishDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          }));
+          setAllBooks(enhancedMockBooks);
+          
           const extractedGenres = Array.from(new Set(mockBooks.flatMap(book => book.genre)));
           setGenres(extractedGenres);
+          
           const featured = mockBooks.reduce((prev, current) => 
             prev.rating > current.rating ? prev : current
           );
-          setFeaturedBook(featured);
+          setFeaturedBook({
+            ...featured,
+            views: Math.floor(Math.random() * 1000) + 500,
+            publishDate: new Date(Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          });
         }
         
-        // 加载已标记的图书
-        const savedFlags = localStorage.getItem('flaggedBooks');
-        if (savedFlags) {
-          setFlaggedBooks(JSON.parse(savedFlags));
+        // 加载已喜欢的图书
+        const savedLikes = localStorage.getItem('likedBooks');
+        if (savedLikes) {
+          setLikedBooks(JSON.parse(savedLikes));
         }
       } catch (error) {
         console.error('Error fetching books:', error);
@@ -154,32 +194,34 @@ export default function BooksPage() {
       result.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === 'year') {
       result.sort((a, b) => b.year - a.year);
+    } else if (sortBy === 'views') {
+      result.sort((a, b) => (b.views || 0) - (a.views || 0));
     }
     
-    // 添加标记状态
+    // 添加喜欢状态
     result = result.map(book => ({
       ...book,
-      isFlagged: flaggedBooks.includes(book.id)
+      isLiked: likedBooks.includes(book.id)
     }));
     
     setFilteredBooks(result);
-  }, [searchTerm, selectedGenre, sortBy, allBooks, flaggedBooks]);
+  }, [searchTerm, selectedGenre, sortBy, allBooks, likedBooks]);
   
-  // handleFlag 函数 - 标记图书
-  // 这个函数用于处理用户标记或取消标记图书的操作。它会更新 flaggedBooks 状态并将结果保存到本地存储中。
-  const handleFlag = (id: number, e: React.MouseEvent) => {
+  // handleLike 函数 - 喜欢图书
+  // 这个函数用于处理用户喜欢或取消喜欢图书的操作。它会更新 likedBooks 状态并将结果保存到本地存储中。
+  const handleLike = (id: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    let newFlaggedBooks;
-    if (flaggedBooks.includes(id)) {
-      newFlaggedBooks = flaggedBooks.filter(bookId => bookId !== id);
+    let newLikedBooks;
+    if (likedBooks.includes(id)) {
+      newLikedBooks = likedBooks.filter(bookId => bookId !== id);
     } else {
-      newFlaggedBooks = [...flaggedBooks, id];
+      newLikedBooks = [...likedBooks, id];
     }
     
-    setFlaggedBooks(newFlaggedBooks);
-    localStorage.setItem('flaggedBooks', JSON.stringify(newFlaggedBooks));
+    setLikedBooks(newLikedBooks);
+    localStorage.setItem('likedBooks', JSON.stringify(newLikedBooks));
   };
 
   // 重置筛选条件
@@ -189,21 +231,18 @@ export default function BooksPage() {
     setSortBy('rating');
   };
   
-  // 仅显示已标记图书
-  const showOnlyFlagged = () => {
-    if (flaggedBooks.length > 0) {
-      const flaggedOnlyBooks = allBooks.filter(book => 
-        flaggedBooks.includes(book.id)
+  // 仅显示已喜欢图书
+  const showOnlyLiked = () => {
+    if (likedBooks.length > 0) {
+      const likedOnlyBooks = allBooks.filter(book => 
+        likedBooks.includes(book.id)
       ).map(book => ({
         ...book,
-        isFlagged: true
+        isLiked: true
       }));
-      setFilteredBooks(flaggedOnlyBooks);
+      setFilteredBooks(likedOnlyBooks);
     }
   };
-
-
-
 
   // return 返回的 JSX 结构被 React 用来创建虚拟 DOM。
   // React 比较新旧虚拟 DOM，计算出需要更新的部分。
@@ -213,248 +252,465 @@ export default function BooksPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-content">
       {/* 英雄区域 */}
-      <section className="relative h-[60vh] min-h-[400px] flex items-center">
+      <motion.section 
+        className="relative h-[70vh] min-h-[500px] flex items-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      >
         {/* 背景图 */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           {featuredBook ? (
-            <Image
-              src={featuredBook.cover}
-              alt="图书背景"
-              fill
-              style={{ objectFit: 'cover' }}
-              priority
-            />
+            <motion.div
+              initial={{ scale: 1.1 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 8 }}
+              className="w-full h-full"
+            >
+              <Image
+                src={featuredBook.cover}
+                alt="图书背景"
+                fill
+                style={{ objectFit: 'cover' }}
+                priority
+                className="brightness-50"
+              />
+            </motion.div>
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-yellow-800 to-amber-600"></div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/40"></div>
         </div>
         
         {/* 内容 */}
         <div className="container-custom relative z-10 text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">探索优质图书</h1>
-          <p className="text-xl md:text-2xl max-w-2xl mb-8 text-white/80">
-            发现来自不同领域的优质图书，开启阅读之旅。
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            {featuredBook ? (
-              <Link href={`/books/${featuredBook.id}`} className="btn-primary bg-amber-600 hover:bg-amber-700">
-                推荐：{featuredBook.title}
-              </Link>
-            ) : (
-              <button className="btn-primary bg-amber-600 hover:bg-amber-700 opacity-50 cursor-not-allowed">
-                暂无推荐图书
-              </button>
-            )}
-            
-            <button 
-              onClick={() => document.getElementById('book-list')?.scrollIntoView({ behavior: 'smooth' })}
-              className="btn-secondary border-white/30 hover:bg-white/10"
+          <div className="flex flex-col md:flex-row gap-8 items-center">
+            {/* 文字介绍 */}
+            <motion.div 
+              className="md:w-1/2"
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
-              浏览所有图书
-            </button>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+                书籍<span className="text-amber-400">阅读</span>笔记
+              </h1>
+              <p className="text-xl max-w-2xl mb-8 text-white/80">
+                记录你的阅读体验，分享文学感悟。每一本书都是一次心灵的旅行。
+              </p>
+              
+              <div className="flex flex-wrap gap-3 mb-6">
+                <span className="px-3 py-1 rounded-full text-sm bg-amber-800/50 text-amber-200 border border-amber-700">阅读体验</span>
+                <span className="px-3 py-1 rounded-full text-sm bg-yellow-800/50 text-yellow-200 border border-yellow-700">书评分享</span>
+                <span className="px-3 py-1 rounded-full text-sm bg-orange-800/50 text-orange-200 border border-orange-700">精彩摘录</span>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowNewPostModal(true)}
+                  className="btn-primary bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 flex items-center justify-center gap-2"
+                >
+                  <FaPen /> 写读书笔记
+                </motion.button>
+                
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => document.getElementById('book-list')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="btn-secondary border-white/30 hover:bg-white/10"
+                >
+                  浏览所有笔记
+                </motion.button>
+              </div>
+            </motion.div>
+            
+            {/* 精选图书卡片 */}
+            {featuredBook && (
+              <motion.div 
+                className="md:w-1/2 flex justify-center"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <div className="relative max-w-md">
+                  {/* 精选标签 */}
+                  <div className="absolute -top-4 -right-4 z-10">
+                    <div className="bg-amber-500 text-black font-bold px-4 py-1 rounded-full shadow-lg transform rotate-12">
+                      推荐
+                    </div>
+                  </div>
+                  
+                  {/* 卡片 */}
+                  <motion.div 
+                    className="bg-black/40 backdrop-blur-lg rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+                    whileHover={{ y: -10 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center mb-3">
+                        <div className="bg-amber-600 p-2 rounded-full mr-3">
+                          <FaBook className="text-white" />
+                        </div>
+                        <span className="text-amber-300 font-medium">精选读书笔记</span>
+                      </div>
+                      
+                      <h3 className="text-2xl font-bold mb-2">{featuredBook.title}</h3>
+                      
+                      <div className="flex items-center gap-2 text-white/70 text-sm mb-4">
+                        <span>{featuredBook.year}</span>
+                        <span>•</span>
+                        <span className="flex items-center">
+                          <FaStar className="text-yellow-500 mr-1" /> {featuredBook.rating}
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center">
+                          <FaRegClock className="mr-1" /> {featuredBook.publishDate}
+                        </span>
+                      </div>
+                      
+                      <p className="text-white/80 mb-4 line-clamp-3">
+                        {featuredBook.description}
+                      </p>
+                      
+                      <Link href={`/books/${featuredBook.id}`} className="text-amber-400 hover:text-amber-300 font-medium flex items-center">
+                        阅读完整笔记 →
+                      </Link>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 搜索和筛选区域 */}
-      <section className="py-12 bg-gray-50 dark:bg-card sticky top-0 z-20" id="book-list">
+      <section className="py-8 bg-gray-50 dark:bg-card sticky top-0 z-20" id="book-list">
         <div className="container-custom">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
-            <h2 className="section-title mb-0">图书列表</h2>
-
-            <div className="flex w-full md:w-auto gap-2">
-              <div className="relative flex-1 md:w-60">
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="搜索图书..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-content focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-600 outline-none"
-                />
+            <div className="flex items-center gap-3">
+              <h2 className="section-title mb-0">读书笔记</h2>
+              <div className="flex h-6 items-center">
+                <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-0.5 text-sm font-medium text-amber-600 dark:text-amber-300">
+                  {filteredBooks.length} 篇
+                </span>
               </div>
-              
-              <button 
-                onClick={() => setShowFilters(!showFilters)}
-                className="btn-secondary flex items-center"
-              >
-                <FaFilter className="mr-2" /> 筛选
-              </button>
             </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowNewPostModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white px-4 py-2 rounded-lg shadow-md"
+            >
+              <FaPlus /> 写新读书笔记
+            </motion.button>
           </div>
-          
-          {/* 筛选选项 */}
-          {showFilters && (
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6 flex flex-wrap gap-4 items-center">
-              {/* 类型筛选 */}
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-600 dark:text-gray-400 mb-2">类型:</span>
-                <div className="flex flex-wrap gap-2">
-                  <button 
-                    onClick={() => setSelectedGenre('')}
-                    className={`px-3 py-1 rounded-full text-sm ${selectedGenre === '' ? 'bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-                  >
-                    全部
-                  </button>
-                  {genres.map(genre => (
-                    <button 
-                      key={genre}
-                      onClick={() => setSelectedGenre(genre)}
-                      className={`px-3 py-1 rounded-full text-sm ${selectedGenre === genre ? 'bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-                    >
-                      {genreMapping[genre]?.icon || ''} {genre}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* 排序选项 */}
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-600 dark:text-gray-400 mb-2">排序:</span>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => setSortBy('rating')}
-                    className={`px-3 py-1 rounded-full text-sm ${sortBy === 'rating' ? 'bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-                  >
-                    <FaStar className="inline mr-1" /> 评分
-                  </button>
-                  <button 
-                    onClick={() => setSortBy('year')}
-                    className={`px-3 py-1 rounded-full text-sm ${sortBy === 'year' ? 'bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-                  >
-                    <FaRegClock className="inline mr-1" /> 年份
-                  </button>
-                </div>
-              </div>
-              
-              {/* 已标记图书筛选 */}
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-600 dark:text-gray-400 mb-2">已标记:</span>
-                <button 
-                  onClick={showOnlyFlagged}
-                  disabled={flaggedBooks.length === 0}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    flaggedBooks.length === 0 
-                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-amber-100 dark:hover:bg-amber-900/20'
-                  }`}
-                >
-                  <FaFlag className="inline mr-1" /> 已标记 ({flaggedBooks.length})
-                </button>
-              </div>
-              
-              {/* 重置按钮 */}
-              {(searchTerm || selectedGenre || sortBy !== 'rating') && (
-                <button 
-                  onClick={resetFilters}
-                  className="text-amber-600 dark:text-amber-400 text-sm hover:underline ml-auto"
-                >
-                  重置所有筛选
-                </button>
-              )}
+
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* 搜索框 */}
+            <div className="relative flex-1 min-w-[260px]">
+              <input
+                type="text"
+                placeholder="搜索读书笔记..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full py-2 pl-10 pr-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-          )}
+            
+            {/* 类型筛选 */}
+            <div className="flex-shrink-0">
+              <select
+                value={selectedGenre}
+                onChange={(e) => setSelectedGenre(e.target.value)}
+                className="py-2 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+              >
+                <option value="">所有类型</option>
+                {genres.map(genre => (
+                  <option key={genre} value={genre}>
+                    {genre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* 排序选项 */}
+            <div className="flex-shrink-0">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'rating' | 'year' | 'views')}
+                className="py-2 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition"
+              >
+                <option value="rating">评分排序</option>
+                <option value="year">年份排序</option>
+                <option value="views">阅读量排序</option>
+              </select>
+            </div>
+            
+            {/* 喜欢过滤器 */}
+            <button 
+              onClick={showOnlyLiked}
+              disabled={likedBooks.length === 0}
+              className={`flex items-center gap-2 py-2 px-4 rounded-lg border transition ${
+                likedBooks.length === 0 
+                  ? 'border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-600 cursor-not-allowed' 
+                  : 'border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+              }`}
+            >
+              <FaHeart className={likedBooks.length === 0 ? 'text-gray-400 dark:text-gray-600' : 'text-red-500'} />
+              我喜欢的
+            </button>
+            
+            {/* 重置按钮 */}
+            {(searchTerm || selectedGenre || sortBy !== 'rating') && (
+              <button 
+                onClick={resetFilters}
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+              >
+                重置
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
       {/* 图书列表 */}
-      <section className="py-16 bg-white dark:bg-content">
+      <section ref={containerRef} className="py-12 bg-white dark:bg-content min-h-[50vh]">
         <div className="container-custom">
           {loading ? (
-            <div className="text-center py-20">
-              <p className="text-xl text-gray-500 dark:text-gray-400">正在加载图书数据...</p>
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
             </div>
           ) : filteredBooks.length > 0 ? (
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            <motion.div
               variants={container}
               initial="hidden"
               animate="show"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {filteredBooks.map(book => (
-                <motion.div key={book.id} variants={item}>
+                <motion.div 
+                  key={book.id}
+                  variants={item}
+                  layout
+                  className="group"
+                >
                   <Link href={`/books/${book.id}`}>
-                    <div className="card overflow-hidden h-full flex flex-col group">
-                      <div className="relative h-64 overflow-hidden">
+                    <motion.article 
+                      className="h-full flex flex-col rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-card shadow-md hover:shadow-xl transition-all duration-300"
+                      whileHover={{ y: -6 }}
+                    >
+                      <div className="relative h-48 overflow-hidden">
                         <Image
                           src={book.cover}
                           alt={book.title}
                           fill
                           style={{ objectFit: 'cover' }}
-                          className="group-hover:scale-105 transition-transform duration-300"
+                          className="group-hover:scale-105 transition-transform duration-500"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                          <div className="p-4 w-full">
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center text-white">
-                                <FaStar className="text-yellow-400 mr-1" />
-                                <span>{book.rating.toFixed(1)}</span>
-                              </div>
-                              <span className="text-sm text-white">{book.year}</span>
-                            </div>
-                          </div>
-                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                         
-                        {/* 标记图标 */}
-                        <button
-                          onClick={(e) => handleFlag(book.id, e)}
-                          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors z-10 ${
-                            book.isFlagged 
-                              ? 'bg-red-500 text-white' 
-                              : 'bg-white/80 text-gray-600 hover:bg-red-100'
-                          }`}
-                        >
-                          <FaFlag className={book.isFlagged ? 'text-white' : 'text-gray-600'} />
-                        </button>
-                      </div>
-                      <div className="p-5 flex flex-col flex-1">
-                        <h3 className="text-xl font-bold mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{book.title}</h3>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{book.author} · {book.year}</p>
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {book.genre.map(g => (
-                            <span 
-                              key={g} 
-                              className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                            >
-                              {genreMapping[g]?.icon || ''} {g}
+                        {/* 类型标签 */}
+                        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                          {book.genre.slice(0, 2).map(g => (
+                            <span key={g} className="px-2 py-1 rounded-md text-xs font-medium bg-black/50 text-white backdrop-blur-sm">
+                              {g}
                             </span>
                           ))}
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300 text-sm mb-4 line-clamp-3 flex-1">{book.description}</p>
-                        <div className="flex items-center justify-between mt-auto text-xs text-gray-600 dark:text-gray-400">
-                          <span className="flex items-center">
-                            <FaBook className="mr-1" />
-                            {book.pages}页
+                        
+                        {/* 评分标签 */}
+                        <div className="absolute top-3 right-3">
+                          <span className="flex items-center px-2 py-1 rounded-md text-xs font-medium bg-yellow-500/90 text-white">
+                            <FaStar className="mr-1" /> {book.rating}
                           </span>
-                          <span>{book.publisher}</span>
+                        </div>
+                        
+                        {/* 时间和年份信息 */}
+                        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center text-white text-xs">
+                          <span className="flex items-center bg-black/50 px-2 py-1 rounded backdrop-blur-sm">
+                            <FaRegClock className="mr-1" /> {book.publishDate}
+                          </span>
+                          <span className="bg-black/50 px-2 py-1 rounded backdrop-blur-sm">
+                            {book.year}
+                          </span>
                         </div>
                       </div>
-                    </div>
+                      
+                      <div className="p-5 flex-1 flex flex-col">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-1">{book.title}</h3>
+                          <button 
+                            onClick={(e) => handleLike(book.id, e)}
+                            className="flex-shrink-0 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-500 transition-colors"
+                            aria-label={book.isLiked ? "取消喜欢" : "喜欢"}
+                          >
+                            <FaHeart className={book.isLiked ? "text-red-500" : ""} />
+                          </button>
+                        </div>
+                        
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-3 flex-1">
+                          {book.description}
+                        </p>
+                        
+                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-auto pt-3 border-t border-gray-100 dark:border-gray-800">
+                          <span>作者: {book.author}</span>
+                          <span className="flex items-center">
+                            <FaRegClock className="mr-1" /> {book.views || 0} 阅读
+                          </span>
+                        </div>
+                      </div>
+                    </motion.article>
                   </Link>
                 </motion.div>
               ))}
             </motion.div>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-xl text-gray-500 dark:text-gray-400">暂无图书数据</p>
-              {(searchTerm || selectedGenre) ? (
-                <p className="mt-2 text-gray-400 dark:text-gray-500">请尝试调整筛选条件</p>
-              ) : (
-                <p className="mt-2 text-gray-400 dark:text-gray-500">请从数据库获取数据或添加图书</p>
-              )}
-              {(searchTerm || selectedGenre) && (
-                <button 
-                  onClick={resetFilters}
-                  className="btn-primary bg-amber-600 hover:bg-amber-700 mt-4"
-                >
-                  重置筛选条件
-                </button>
-              )}
-            </div>
+            <motion.div 
+              variants={fadeIn}
+              initial="hidden"
+              animate="show"
+              className="text-center py-20"
+            >
+              <div className="inline-flex justify-center items-center w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 mb-6">
+                <FaSearch size={28} />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">未找到读书笔记</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                没有找到符合当前筛选条件的读书笔记。尝试调整筛选条件或创建新的读书笔记。
+              </p>
+              <button 
+                onClick={resetFilters}
+                className="btn-primary bg-amber-600 hover:bg-amber-700 mr-4"
+              >
+                清除筛选条件
+              </button>
+              <button 
+                onClick={() => setShowNewPostModal(true)}
+                className="btn-secondary border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300"
+              >
+                <FaPlus className="mr-2" /> 写新读书笔记
+              </button>
+            </motion.div>
           )}
         </div>
       </section>
+      
+      {/* 写新读书笔记模态框 */}
+      <AnimatePresence>
+        {showNewPostModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowNewPostModal(false)}
+          >
+            <motion.div 
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-2xl w-full shadow-2xl"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                  <FaPen className="mr-3 text-amber-600 dark:text-amber-400" /> 写新读书笔记
+                </h3>
+                <button 
+                  onClick={() => setShowNewPostModal(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    书籍标题
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="输入书籍标题..."
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      作者
+                    </label>
+                    <input 
+                      type="text"
+                      placeholder="作者姓名..."
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      出版年份
+                    </label>
+                    <input 
+                      type="number"
+                      placeholder="出版年份..."
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    类型
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {genres.slice(0, 10).map(genre => (
+                      <button 
+                        key={genre}
+                        className="px-3 py-1 rounded-full text-sm bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/50"
+                      >
+                        {genre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    阅读感受
+                  </label>
+                  <textarea 
+                    rows={6}
+                    placeholder="写下你对这本书的感想..."
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  ></textarea>
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4">
+                  <button 
+                    onClick={() => setShowNewPostModal(false)}
+                    className="px-6 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    取消
+                  </button>
+                  <button 
+                    className="px-6 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white shadow-md"
+                  >
+                    发布笔记
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 } 

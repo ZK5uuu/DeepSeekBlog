@@ -12,6 +12,12 @@ public class BlogPost {
     private String coverImageUrl;
     private String summary;
     private String content;
+    private String contentType; // blog, book, movie, music
+    private String artistName;  // 音乐评论专用
+    private String albumName;   // 音乐评论专用
+    private String albumImageUrl; // 音乐评论专用-专辑封面
+    private String contentLink; // 外部链接
+    private Integer viewCount; // 浏览量
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

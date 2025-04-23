@@ -10,6 +10,7 @@ public interface UserService {
     User findByUsername(String username);
     User register(RegisterRequest request);
     User login(LoginRequest request);
+    User createUser(User user);
     List<User> findAll();
     User update(User user);
     boolean delete(Integer id);

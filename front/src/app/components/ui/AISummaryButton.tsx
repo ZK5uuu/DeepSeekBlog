@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaRobot, FaSpinner, FaLightbulb } from 'react-icons/fa';
 import { IoCloseOutline } from 'react-icons/io5';
-import { aiApi } from '@/app/api';
 
 interface AISummaryButtonProps {
   content: string;
@@ -27,42 +26,65 @@ export default function AISummaryButton({ content, title, postId }: AISummaryBut
     console.log(`文章内容长度: ${content.length} 字符`);
     
     try {
-      // 先尝试获取已有摘要
-      let summaryData;
+      // 首先测试连接
       try {
-        console.log(`尝试获取已有摘要, 请求URL: /deepseek/summary/${postId}`);
-        const response = await aiApi.getSummary(postId);
-        console.log('获取摘要API响应:', response);
-        
-        if (response && response.data) {
-          summaryData = response.data;
-          console.log("获取到已有摘要:", response.data);
+        const testResponse = await fetch('http://localhost:8080/api/summary/test');
+        if (testResponse.ok) {
+          console.log('连接测试成功:', await testResponse.text());
+        } else {
+          console.error('连接测试失败:', testResponse.status);
+          throw new Error('无法连接到服务器，请检查后端服务是否正常运行');
         }
-      } catch (err: any) {
-        console.log(`获取已有摘要失败: ${err.message}`);
-        console.log("尝试生成新摘要...");
-        
-        // 如果获取失败或不存在，则生成新的摘要
-        console.log(`生成新摘要, 请求URL: /deepseek/summary/${postId} (POST)`);
-        const response = await aiApi.generateSummary(postId);
-        console.log('生成摘要API响应:', response);
-        
-        summaryData = response.data;
-        console.log("生成新摘要成功:", response.data);
+      } catch (error) {
+        console.error('连接测试异常:', error);
+        throw new Error('无法连接到服务器，请检查网络连接');
       }
       
-      if (summaryData && summaryData.content) {
-        console.log(`摘要内容: ${summaryData.content}`);
-        setSummary(summaryData.content);
-        setShowSummary(true);
-      } else {
-        console.error('摘要数据无效:', summaryData);
-        throw new Error('未能获取摘要内容');
+      // 创建请求数据对象，包含摘要字数限制
+      const requestData = {
+        content: content,
+        maxLength: 30 // 限制摘要最多30字
+      };
+
+      // 使用JSON格式发送请求
+      const response = await fetch('http://localhost:8080/api/summary/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      });
+      
+      if (!response.ok) {
+        console.error('API调用失败:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('错误详情:', errorText);
+        throw new Error(`摘要生成失败: ${response.status} - ${errorText || response.statusText}`);
       }
+      
+      const summaryText = await response.text();
+      console.log('摘要生成成功，长度:', summaryText.length);
+      
+      // 确保摘要不超过30字
+      const trimmedSummary = summaryText.length > 30 ? summaryText.substring(0, 30) + '...' : summaryText;
+      setSummary(trimmedSummary || '摘要生成成功，但内容为空');
+      setShowSummary(true);
     } catch (err: any) {
       console.error('生成摘要时出错:', err);
-      console.error('错误详情:', err.response || err.message);
-      setError(`生成摘要时发生错误: ${err.message}`);
+      setError(err.message || '摘要生成失败，请稍后再试');
+      
+      // 生成本地摘要作为备用
+      try {
+        // 清理HTML标签
+        const plainText = content.replace(/<[^>]*>?/gm, '');
+        // 提取前30个字符
+        const localSummary = plainText.substring(0, 30) + '...';
+        console.log('使用本地生成的摘要:', localSummary);
+        setSummary(localSummary);
+        setShowSummary(true);
+      } catch (localError) {
+        console.error('本地摘要生成失败:', localError);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,11 +107,11 @@ export default function AISummaryButton({ content, title, postId }: AISummaryBut
         ) : (
           <FaRobot className="mr-2" />
         )}
-        {isLoading ? '正在生成AI摘要...' : '30字极简解析'}
+        {isLoading ? '正在生成摘要...' : '30字极简解析'}
       </motion.button>
 
       {/* 错误提示 */}
-      {error && (
+      {error && !showSummary && (
         <motion.div 
           className="mt-4 p-4 bg-red-100 text-red-700 rounded-md"
           initial={{ opacity: 0, y: -10 }}

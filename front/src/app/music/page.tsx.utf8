@@ -1,0 +1,820 @@
+﻿"use client";
+import React, { useEffect, useRef, useState, useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaSearch, FaFilter, FaSort, FaPlay, FaHeadphones, FaUser, FaHeart, FaRegHeart, FaChartBar, FaMusic, FaCompactDisc, FaCalendarAlt } from "react-icons/fa";
+import Link from "next/link";
+import Image from "next/image";
+// 绉婚櫎涓嶉渶瑕佺殑瀵煎叆
+// import { musicApi, mockMusic } from "../api/services/musicService";
+import { postApi } from "../api/services/blogService";
+import { useRouter, usePathname } from "next/navigation";
+import { format, isValid, parseISO } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
+import { FastAverageColor } from 'fast-average-color';
+// 绉婚櫎鏈夐棶棰樼殑瀵煎叆
+// import { getUser } from "../context/AuthContext";
+
+// Define a type for blog post data from API
+interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  cover_image_url?: string;
+  create_time: string;
+  views?: number;
+  liked?: boolean;
+  likes?: number;
+  artist_name?: string;
+  album_name?: string;
+  music_styles?: string[];
+  username?: string;
+}
+
+// 娣诲姞鏃ユ湡鏍煎紡鍖栧嚱鏁?const formatDate = (dateString: string) => {
+  if (!dateString) return '鏈煡鏃ユ湡';
+  try {
+    const date = parseISO(dateString);
+    if (!isValid(date)) return '鏈煡鏃ユ湡';
+    return format(date, 'yyyy骞碝M鏈坉d鏃?, { locale: zhCN });
+  } catch (error) {
+    console.error('鏃ユ湡鏍煎紡鍖栭敊璇?', dateString, error);
+    return '鏈煡鏃ユ湡';
+  }
+};
+
+// Use BlogPost as the base type for Music, making all fields required for the UI
+interface Music extends Omit<BlogPost, 'cover_image_url' | 'views' | 'liked' | 'likes' | 'artist_name' | 'album_name' | 'music_styles' | 'username'> {
+  cover_image_url: string;
+  views: number;
+  liked: boolean;
+  likes: number;
+  artist_name: string;
+  album_name: string;
+  music_styles: string[];
+  username: string;
+  tags?: string[];
+  album_cover?: string;
+  cover_image?: string;
+}
+
+// 鐢ㄤ簬鏈湴瀛樺偍娴忚閲忕殑閿?// const VIEW_COUNT_STORAGE_KEY = 'music_blog_view_counts';
+// 鐢ㄤ簬浼氳瘽瀛樺偍宸叉煡鐪嬫枃绔犵殑閿?// const VIEWED_POSTS_SESSION_KEY = 'viewed_posts';
+
+// 浠庢湰鍦板瓨鍌ㄨ幏鍙栨祻瑙堥噺
+// const getLocalViewCounts = (): Record<string, number> => {
+//   if (typeof window === 'undefined') return {};
+  
+//   const storedData = localStorage.getItem(VIEW_COUNT_STORAGE_KEY);
+//   if (!storedData) return {};
+  
+//   try {
+//     return JSON.parse(storedData);
+//   } catch (e) {
+//     console.error('瑙ｆ瀽鏈湴娴忚閲忔暟鎹け璐?', e);
+//     return {};
+//   }
+// };
+
+// 鏇存柊鏈湴瀛樺偍涓殑娴忚閲?// const updateLocalViewCount = (postId: string, incrementBy: number = 1): void => {
+//   if (typeof window === 'undefined') return;
+  
+//   const viewCounts = getLocalViewCounts();
+//   viewCounts[postId] = (viewCounts[postId] || 0) + incrementBy;
+  
+//   localStorage.setItem(VIEW_COUNT_STORAGE_KEY, JSON.stringify(viewCounts));
+// };
+
+// 妫€鏌ュ笘瀛愭槸鍚﹀凡鍦ㄥ綋鍓嶄細璇濅腑琚煡鐪?// const hasViewedInSession = (postId: string): boolean => {
+//   try {
+//     // 鍦ㄥ紑鍙戠幆澧冧笅濮嬬粓鍏佽澧炲姞娴忚閲忥紝鏂逛究娴嬭瘯
+//     if (process.env.NODE_ENV !== 'production') {
+//       console.log('寮€鍙戠幆澧? 鍏佽澧炲姞娴忚閲?);
+//       return false;
+//     }
+    
+//     const storedPosts = sessionStorage.getItem(VIEWED_POSTS_SESSION_KEY);
+//     if (!storedPosts) return false;
+    
+//     const viewedPostsArray = JSON.parse(storedPosts);
+//     return Array.isArray(viewedPostsArray) && viewedPostsArray.includes(postId);
+//   } catch (error) {
+//     console.error('妫€鏌ユ煡鐪嬬姸鎬佹椂鍑洪敊:', error);
+//     return false; // 鍑洪敊鏃堕粯璁や负鏈煡鐪?//   }
+// };
+
+// 鏍囪甯栧瓙涓哄凡鍦ㄤ細璇濅腑鏌ョ湅
+// const markAsViewedInSession = (postId: string): void => {
+//   try {
+//     const storedPosts = sessionStorage.getItem(VIEWED_POSTS_SESSION_KEY);
+    
+//     if (storedPosts) {
+//       try {
+//         const parsed = JSON.parse(storedPosts);
+//         if (Array.isArray(parsed)) {
+//           const viewedPosts = parsed;
+//           if (!viewedPosts.includes(postId)) {
+//             viewedPosts.push(postId);
+//             sessionStorage.setItem(VIEWED_POSTS_SESSION_KEY, JSON.stringify(viewedPosts));
+//             console.log(`宸插皢甯栧瓙 ${postId} 鏍囪涓哄凡鏌ョ湅`);
+//           } else {
+//             console.log(`甯栧瓙 ${postId} 宸茬粡琚爣璁颁负宸叉煡鐪嬶紝涓嶅啀澧炲姞娴忚閲廯);
+//           }
+//         }
+//       } catch {
+//         // 瑙ｆ瀽閿欒锛屼娇鐢ㄧ┖鏁扮粍
+//         console.log(`甯栧瓙 ${postId} 鏍囪涓哄凡鏌ョ湅鏃跺嚭閿欙紝浣跨敤绌烘暟缁刞);
+//       }
+//     } else {
+//       console.log(`甯栧瓙 ${postId} 鏍囪涓哄凡鏌ョ湅鏃跺嚭閿欙紝sessionStorage涓病鏈塿iewed_posts`);
+//     }
+//   } catch (error) {
+//     console.error('鏍囪涓哄凡鏌ョ湅鏃跺嚭閿?', error);
+//   }
+// };
+
+export default function MusicPage() {
+  const [music, setMusic] = useState<Music[]>([]);
+  const [filteredMusic, setFilteredMusic] = useState<Music[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState<"newest" | "oldest">("newest");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isUserBlogs, setIsUserBlogs] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  
+  // 鍥哄畾鐨勯煶涔愰鏍煎垪琛?  const musicGenres = ["Classical", "Jazz", "R&B", "Soul/Neo Soul", "Rock", "Funk", "Ballet", "Else"];
+
+  // 澶囩敤妯℃嫙鏁版嵁
+  const mockMusicData: Music[] = [
+    {
+      id: "1",
+      title: "The Dark Side of the Moon - 缁忓吀涓撹緫璇勮",
+      content: "杩欐槸Pink Floyd鐨勭粡鍏镐箣浣滐紝璁╀汉娌夋蹈鍦ㄦ繁閭冪殑闊充箰涓栫晫涓€備笓杈戜腑鐨?Time'鍜?Money'鏄垜鏈€鍠滄鐨勬洸鐩紝瀹岀編灞曠幇浜嗕箰闃熺殑瀹為獙绮剧鍜岄煶涔愭墠鍗庛€?,
+      cover_image_url: "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80",
+      create_time: "2023-11-01T08:30:00.000Z",
+      views: 256,
+      liked: false,
+      likes: 58,
+      artist_name: "Pink Floyd",
+      album_name: "The Dark Side of the Moon",
+      music_styles: ["Rock", "Experimental"],
+      username: "musiclover"
+    },
+    {
+      id: "2",
+      title: "Kind of Blue - 鐖靛＋涔愭澃浣?,
+      content: "Miles Davis鐨勩€奒ind of Blue銆嬫槸鐖靛＋涔愬巻鍙蹭笂鐨勯噷绋嬬锛屽畬缇庤瀺鍚堜簡妯℃€佺埖澹鏍硷紝姣忎竴涓煶绗﹂兘鏁ｅ彂鐫€鐙壒榄呭姏銆?,
+      cover_image_url: "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80",
+      create_time: "2023-11-05T10:15:00.000Z",
+      views: 189,
+      liked: true,
+      likes: 43,
+      artist_name: "Miles Davis",
+      album_name: "Kind of Blue",
+      music_styles: ["Jazz", "Modal Jazz"],
+      username: "jazzfan"
+    },
+    {
+      id: "3",
+      title: "To Pimp a Butterfly - 鐜颁唬缁忓吀",
+      content: "Kendrick Lamar鐨勩€奣o Pimp a Butterfly銆嬭瀺鍚堜簡鐖靛＋銆佹斁鍏嬪拰璇村敱鍏冪礌锛屼笉浠呮槸闊充箰浣滃搧锛屾洿鏄绀句細璁鐨勬繁鍒诲弽鎬濄€?,
+      cover_image_url: "https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=870&q=80",
+      create_time: "2023-11-10T15:45:00.000Z",
+      views: 312,
+      liked: false,
+      likes: 76,
+      artist_name: "Kendrick Lamar",
+      album_name: "To Pimp a Butterfly",
+      music_styles: ["R&B", "Hip Hop"],
+      username: "musiccritic"
+    },
+    {
+      id: "4",
+      title: "Blue Train - 钀ㄥ厠鏂穮宄?,
+      content: "John Coltrane鐨勩€夿lue Train銆嬫槸纭崥鏅埖澹箰鐨勪唬琛ㄤ綔锛屽挨鍏舵槸浠栧湪钀ㄥ厠鏂笂鐨勬紨濂忔妧宸т护浜烘儕鍙广€?,
+      cover_image_url: "https://images.unsplash.com/photo-1454922915609-78549ad709bb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=872&q=80",
+      create_time: "2023-11-15T09:20:00.000Z",
+      views: 145,
+      liked: false,
+      likes: 32,
+      artist_name: "John Coltrane",
+      album_name: "Blue Train",
+      music_styles: ["Jazz", "Hard Bop"],
+      username: "saxplayer"
+    }
+  ];
+
+  // 杩囨护鍜屾帓搴忛煶涔愬垪琛?  const filterAndSortMusic = () => {
+    // 绛涢€夐€昏緫
+    let filtered = music.filter((item) => {
+      // 鎼滅储椤硅繃婊?      const searchMatch =
+        searchTerm === "" ||
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.artist_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.album_name.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // 椋庢牸杩囨护
+      const genreMatch =
+        selectedGenre === null ||
+        (selectedGenre === "Else" 
+          ? item.music_styles.some(style => !musicGenres.slice(0, -1).includes(style))
+          : item.music_styles.includes(selectedGenre));
+
+      // 鐢ㄦ埛鍗氬杩囨护
+      const userMatch = !isUserBlogs || (userId && item.username === userId);
+
+      return searchMatch && genreMatch && userMatch;
+    });
+
+    // 鎺掑簭閫昏緫
+    switch (sortOption) {
+      case "newest":
+        filtered = [...filtered].sort(
+          (a, b) => new Date(b.create_time).getTime() - new Date(a.create_time).getTime()
+        );
+        break;
+      case "oldest":
+        filtered = [...filtered].sort(
+          (a, b) => new Date(a.create_time).getTime() - new Date(b.create_time).getTime()
+        );
+        break;
+    }
+
+    setFilteredMusic(filtered);
+  };
+
+  // 鑾峰彇褰撳墠鐢ㄦ埛ID - 杩欓噷绠€鍖栧鐞?  useEffect(() => {
+    // 妯℃嫙鐢ㄦ埛璁よ瘉锛屽疄闄呴」鐩腑搴斾粠AuthContext鑾峰彇
+    const mockUserId = localStorage.getItem("userId") || null;
+    setUserId(mockUserId);
+  }, []);
+
+  // 鑾峰彇闊充箰鏁版嵁
+  const fetchMusic = async (content_type = "闊充箰") => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log('Fetching music posts with content_type:', content_type);
+
+      // Get posts by content type
+      const response = await postApi.getPostsByContentType(content_type);
+      
+      if (response && response.data && response.data.length > 0) {
+        console.log('Fetched posts from API:', response.data);
+        
+        const mappedMusic = response.data.map((post: any) => {
+          return {
+            id: post.id,
+            title: post.title,
+            summary: post.summary || '',
+            content: post.content || '',
+            create_time: post.createTime || post.create_time || new Date().toISOString(),
+            update_time: post.updateTime || post.update_time || new Date().toISOString(),
+            album_cover: post.album_cover || post.coverImage || '',
+            artist_name: post.artist_name || '',
+            album_name: post.album_name || '',
+            cover_image: post.coverImage || '',
+            author: post.author || { username: '鏈煡浣滆€? },
+            tags: post.tags || [],
+            likes: post.likes || 0,
+            liked: post.liked || false,
+            content_type: post.contentType || 'MUSIC',
+          };
+        });
+
+        setMusic(mappedMusic);
+        
+        console.log('Mapped music data:', mappedMusic);
+      } else {
+        console.log('No music posts found or empty response');
+        setMusic([]);
+        }
+      } catch (error) {
+      console.error('Error fetching music posts:', error);
+      setError('鑾峰彇闊充箰鍗氬澶辫触锛岃绋嶅悗閲嶈瘯');
+      setMusic([]);
+      } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 鐩戝惉杩囨护鏉′欢鍙樺寲
+  useEffect(() => {
+    filterAndSortMusic();
+  }, [searchTerm, selectedGenre, sortOption, music, isUserBlogs, userId]);
+
+  // 娣诲姞鑾峰彇鏁版嵁鐨剈seEffect
+  useEffect(() => {
+    console.log('闊充箰椤祊athname鏀瑰彉锛岄噸鏂拌幏鍙栨暟鎹?);
+    fetchMusic();
+  }, [pathname]);
+  
+  // 娣诲姞璺敱浜嬩欢鐩戝惉锛岀‘淇濋〉闈㈣幏鍙栨渶鏂版暟鎹?  useEffect(() => {
+    // 椤甸潰鍔犺浇鏃惰幏鍙栨暟鎹?    fetchMusic();
+    
+    console.log('璁剧疆椤甸潰鍙鎬у彉鍖栧拰鍘嗗彶瀵艰埅鐩戝惉');
+    
+    // 瀹氫箟椤甸潰鍙鎬у彉鍖栧鐞嗗嚱鏁?    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('椤甸潰閲嶆柊鍙樹负鍙锛屽埛鏂版暟鎹?);
+        fetchMusic();
+      }
+    };
+    
+    // 瀹氫箟鍘嗗彶瀵艰埅澶勭悊鍑芥暟
+    const handlePopState = () => {
+      console.log('妫€娴嬪埌娴忚鍣ㄥ鑸簨浠讹紙鍚庨€€/鍓嶈繘锛夛紝鍒锋柊鏁版嵁');
+      fetchMusic();
+    };
+    
+    // 娣诲姞椤甸潰鍙鎬у彉鍖栫洃鍚?    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // 娣诲姞鍘嗗彶瀵艰埅鐩戝惉
+    window.addEventListener('popstate', handlePopState);
+    
+    // 杩斿洖鍑芥暟锛堢粍浠跺嵏杞芥椂浼氭墽琛岋級
+    return () => {
+      console.log('娓呴櫎椤甸潰浜嬩欢鐩戝惉');
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  // 鍒囨崲鐢ㄦ埛鍗氬鏄剧ず
+  const toggleUserBlogs = () => {
+    setIsUserBlogs(!isUserBlogs);
+  };
+
+  // 娣诲姞鎴栫Щ闄ら煶涔愰鏍?  const toggleGenre = (genre: string) => {
+    if (selectedGenre === genre) {
+      setSelectedGenre(null);
+    } else {
+      setSelectedGenre(genre);
+    }
+  };
+
+  // 澶勭悊鐐硅禐
+  const handleLike = async (id: string) => {
+    try {
+      // 浣跨敤鍗氬API澶勭悊鐐硅禐
+      await postApi.likePost(id);
+      console.log(`Liked music with ID: ${id}`);
+      
+      // 鏇存柊鏈湴鐘舵€?      setMusic(music.map(item => 
+        item.id === id 
+          ? { ...item, liked: !item.liked } 
+          : item
+      ));
+    } catch (error) {
+      console.error("Failed to like music:", error);
+    }
+  };
+
+  // 楠ㄦ灦灞忕粍浠?  const SkeletonLoader = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="bg-black/30 rounded-xl overflow-hidden shadow-lg animate-pulse border border-purple-500/10">
+          <div className="h-48 bg-purple-900/20"></div>
+          <div className="p-4">
+            <div className="h-6 bg-purple-900/20 rounded-lg mb-3 w-3/4"></div>
+            <div className="h-4 bg-purple-900/20 rounded-lg mb-2 w-1/2"></div>
+            <div className="h-4 bg-purple-900/20 rounded-lg mb-2 w-5/6"></div>
+            <div className="h-4 bg-purple-900/20 rounded-lg w-1/4"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const MusicCard = ({ music, onLike }: { music: Music; onLike: (id: string) => void }) => {
+    const [cardColors, setCardColors] = useState({
+      primary: 'rgba(79, 70, 229, 0.8)',
+      text: 'white',
+      light: 'rgba(139, 92, 246, 0.5)',
+      border: 'rgba(139, 92, 246, 0.3)'
+    });
+    const [isLoaded, setIsLoaded] = useState(false);
+    const imageRef = useRef<HTMLImageElement>(null);
+    const fac = new FastAverageColor();
+    
+    const handleCardClick = () => {
+      console.log('Card clicked, navigating to blog detail page for ID:', music.id);
+      
+      // 鐩存帴瀵艰埅鍒板崥瀹㈣鎯呴〉锛屾祻瑙堥噺灏嗗湪鍗氬璇︽儏椤靛鐞?      router.push(`/blog/${music.id}`);
+    };
+    
+    const handleLikeClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click when like button is clicked
+      onLike(music.id);
+    };
+
+    const handleImageLoad = () => {
+      if (imageRef.current) {
+        fac.getColorAsync(imageRef.current)
+          .then((color: any) => {
+            // 璁＄畻浜害鏉ュ喅瀹氭枃瀛楅鑹?            const rgb = color.value;
+            const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+            const textColor = brightness > 128 ? '#1a1a2a' : 'white';
+            
+            setCardColors({
+              primary: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.85)`,
+              text: textColor,
+              light: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.5)`, 
+              border: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.3)`
+            });
+            setIsLoaded(true);
+          })
+          .catch((e: Error) => {
+            console.error('Error getting average color:', e);
+            setIsLoaded(true);
+          });
+    }
+
+  return (
+      <motion.div 
+        className="rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl group relative"
+        onClick={handleCardClick}
+        style={{ 
+          cursor: 'pointer',
+          backgroundColor: isLoaded ? cardColors.primary : 'rgba(17, 24, 39, 0.8)',
+          borderColor: isLoaded ? cardColors.border : 'rgba(139, 92, 246, 0.3)',
+          borderWidth: '1px'
+        }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        whileHover={{ 
+          y: -5,
+          boxShadow: `0 10px 25px -5px ${isLoaded ? cardColors.border : 'rgba(139, 92, 246, 0.3)'}` 
+        }}
+      >
+        <div className="relative h-48 w-full overflow-hidden">
+            <Image
+            ref={imageRef as any}
+            src={music.album_cover || music.cover_image || 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bXVzaWN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60'}
+            alt={music.album_name || music.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-all duration-500 group-hover:scale-110"
+            onLoadingComplete={handleImageLoad}
+            crossOrigin="anonymous"
+          />
+          <div 
+            className="absolute inset-0" 
+            style={{ 
+              background: isLoaded ? 
+                `linear-gradient(to top, ${cardColors.primary} 0%, transparent 100%)` : 
+                'linear-gradient(to top, rgba(17, 24, 39, 0.8) 0%, transparent 100%)'
+            }}
+          />
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
+              <FaPlay className="text-white text-xl" />
+            </div>
+          </div>
+        </div>
+        <div className="p-4" style={{ color: cardColors.text }}>
+          <h3 className="text-xl font-bold truncate">
+            {music.album_name || "鏈煡涓撹緫"}
+          </h3>
+          <p className="text-sm mt-1 opacity-85">
+            <span className="font-medium">{music.artist_name || "鏈煡鑹烘湳瀹?}</span>
+          </p>
+          <div className="flex items-center mt-2 space-x-2">
+            {(music.tags && music.tags.length > 0) ? music.tags.slice(0, 2).map((tag: string, index: number) => (
+              <span 
+                key={index} 
+                className="px-2 py-1 text-xs rounded-full"
+                style={{ 
+                  backgroundColor: `${cardColors.light}`, 
+                  color: cardColors.text
+                }}
+              >
+                {tag}
+              </span>
+            )) : (
+              <span 
+                className="px-2 py-1 text-xs rounded-full"
+                style={{ 
+                  backgroundColor: `${cardColors.light}`, 
+                  color: cardColors.text
+                }}
+              >
+                闊充箰
+              </span>
+            )}
+            {music.tags && music.tags.length > 2 && (
+              <span 
+                className="px-2 py-1 text-xs rounded-full"
+                style={{ 
+                  backgroundColor: `${cardColors.light}`, 
+                  color: cardColors.text
+                }}
+              >
+                +{music.tags.length - 2}
+              </span>
+            )}
+          </div>
+          <div className="flex justify-between items-center mt-3 text-sm" style={{ opacity: 0.85 }}>
+            <span className="w-6"></span>
+            <span>{formatDate(music.create_time)}</span>
+            <button 
+              onClick={handleLikeClick}
+              className="flex items-center transition-colors"
+              style={{ color: music.liked ? '#ef4444' : 'inherit' }}
+            >
+              {music.liked ? <FaHeart /> : <FaRegHeart />} {music.likes}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-white text-gray-800">
+      {/* 椤甸潰鏍囬鍖哄煙 */}
+      <div className="w-full bg-gradient-to-r from-purple-900 via-indigo-800 to-blue-900 py-12 px-4 md:px-8 shadow-2xl text-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-extrabold mb-2 flex items-center bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400">
+                <FaHeadphones className="mr-3 text-pink-400" />
+                闊充箰涓栫晫
+              </h1>
+              <p className="text-purple-200 text-sm md:text-base max-w-2xl">
+                鎺㈢储闊充箰鐨勬棤闄愬彲鑳斤紝鍒嗕韩浣犵殑闊充箰鎰熷彈
+              </p>
+            </div>
+            <Link href="/blog/create?type=music">
+              <motion.button 
+                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(255, 0, 255, 0.5)" }}
+                whileTap={{ scale: 0.95 }}
+                className="mt-4 md:mt-0 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-medium flex items-center shadow-lg"
+              >
+                <FaPlay className="mr-2" /> 鍐欎箰璇?              </motion.button>
+            </Link>
+          </div>
+          
+          {/* 鏁版嵁缁熻鍖哄煙 */}
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-gradient-to-br from-pink-900/60 to-purple-900/60 p-4 rounded-xl backdrop-blur-sm shadow-lg border border-pink-800/30 flex flex-col items-center justify-center">
+              <div className="flex items-center">
+                <FaMusic className="text-pink-400 mr-2" />
+                <p className="text-sm font-medium text-pink-200">鎬讳箰璇勬暟</p>
+              </div>
+              <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-300">{Array.isArray(music) ? music.length : 0}</p>
+            </div>
+           
+            <div className="bg-gradient-to-br from-blue-900/60 to-cyan-900/60 p-4 rounded-xl backdrop-blur-sm shadow-lg border border-blue-800/30 flex flex-col items-center justify-center">
+              <div className="flex items-center">
+                <FaFilter className="text-blue-400 mr-2" />
+                <p className="text-sm font-medium text-blue-200">绛涢€夌粨鏋?/p>
+              </div>
+              <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">{filteredMusic.length}</p>
+              </div>
+              
+            <div className="bg-gradient-to-br from-cyan-900/60 to-teal-900/60 p-4 rounded-xl backdrop-blur-sm shadow-lg border border-cyan-800/30 flex flex-col items-center justify-center">
+              <div className="flex items-center">
+                <FaChartBar className="text-cyan-400 mr-2" />
+                <p className="text-sm font-medium text-cyan-200">椋庢牸鏁伴噺</p>
+              </div>
+              <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-teal-300">{musicGenres.length}</p>
+            </div>
+          </div>
+          
+          {/* 鎼滅储鍜岀瓫閫夊尯鍩?*/}
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+            {/* 鎼滅储妗?*/}
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                placeholder="鎼滅储闊充箰銆佽壓浜烘垨涓撹緫..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 pl-12 bg-black/20 border border-purple-600/30 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-white placeholder-purple-300"
+              />
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-400" />
+            </div>
+
+            {/* 鎴戠殑涔愯瘎鎸夐挳 */}
+            {userId && (
+              <motion.button
+                onClick={toggleUserBlogs}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-5 py-3 rounded-full flex items-center shadow-md transition-all ${
+                  isUserBlogs ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white" : "bg-black/20 text-purple-300 border border-purple-600/30 hover:bg-purple-900/30"
+                }`}
+              >
+                <FaUser className="mr-2" />
+                鎴戠殑涔愯瘎
+              </motion.button>
+            )}
+
+            {/* 绛涢€夋寜閽?*/}
+            <div className="relative">
+              <motion.button
+                onClick={() => {
+                  setIsFilterOpen(!isFilterOpen);
+                  setIsSortOpen(false);
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center px-5 py-3 bg-black/20 border border-purple-600/30 rounded-full text-purple-300 hover:bg-purple-900/30 shadow-md"
+              >
+                <FaFilter className="mr-2" />
+                闊充箰椋庢牸 {selectedGenre && `(${selectedGenre})`}
+              </motion.button>
+
+              <AnimatePresence>
+                {isFilterOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="absolute right-0 mt-2 w-72 bg-black/50 backdrop-blur-md border border-purple-600/30 shadow-xl rounded-xl p-4 z-10"
+                  >
+                    <p className="text-sm font-medium mb-3 text-pink-400">閫夋嫨闊充箰椋庢牸</p>
+                    <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-transparent pr-2">
+                      {musicGenres.map((genre) => (
+                    <button 
+                      key={genre}
+                          onClick={() => toggleGenre(genre)}
+                          className={`text-xs px-3 py-1.5 rounded-full ${
+                            selectedGenre === genre
+                              ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md"
+                              : "bg-purple-900/30 text-purple-300 hover:bg-purple-800/50"
+                          }`}
+                        >
+                          {genre}
+                    </button>
+                  ))}
+                </div>
+                    {selectedGenre && (
+                      <button
+                        onClick={() => setSelectedGenre(null)}
+                        className="text-xs text-pink-400 mt-3 hover:text-pink-300 flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        娓呴櫎鎵€鏈夐€夋嫨
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              </div>
+              
+            {/* 鎺掑簭鎸夐挳 */}
+            <div className="relative">
+              <motion.button
+                onClick={() => {
+                  setIsSortOpen(!isSortOpen);
+                  setIsFilterOpen(false);
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center px-5 py-3 bg-black/20 border border-purple-600/30 rounded-full text-purple-300 hover:bg-purple-900/30 shadow-md"
+              >
+                <FaSort className="mr-2" />
+                {sortOption === "newest" && "鏈€鏂?}
+                {sortOption === "oldest" && "鏈€鏃?}
+              </motion.button>
+
+              <AnimatePresence>
+                {isSortOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="absolute right-0 mt-2 w-48 bg-black/50 backdrop-blur-md border border-purple-600/30 shadow-xl rounded-xl overflow-hidden z-10"
+                  >
+                    <button
+                      onClick={() => {
+                        setSortOption("newest");
+                        setIsSortOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 hover:bg-purple-900/50 transition-colors ${
+                        sortOption === "newest" ? "bg-purple-900/70 text-pink-300" : "text-purple-300"
+                      }`}
+                    >
+                      <FaSort className="inline mr-2" /> 鏈€鏂?                  </button>
+                  <button 
+                      onClick={() => {
+                        setSortOption("oldest");
+                        setIsSortOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 hover:bg-purple-900/50 transition-colors ${
+                        sortOption === "oldest" ? "bg-purple-900/70 text-pink-300" : "text-purple-300"
+                      }`}
+                    >
+                      <FaSort className="inline mr-2" /> 鏈€鏃?                  </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+                </div>
+              </div>
+              
+      {/* 鍐呭鍖哄煙 */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
+        {isLoading ? (
+          <SkeletonLoader />
+        ) : (
+          <>
+            {/* 娣诲姞閿欒淇℃伅鏄剧ず */}
+            {error && (
+              <div className="w-full bg-red-100 border border-red-300 rounded-lg p-4 mb-6 text-red-700">
+                <p className="font-medium mb-1">鑾峰彇鏁版嵁鏃跺嚭閿?</p>
+                <p>{error}</p>
+                <button 
+                  onClick={() => fetchMusic()}
+                  className="mt-3 px-4 py-2 bg-red-500/30 hover:bg-red-500/50 rounded-md text-white transition-colors"
+                >
+                  閲嶈瘯
+                </button>
+            </div>
+          )}
+            
+            {filteredMusic.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredMusic.map((item) => (
+                  <MusicCard key={item.id} music={item} onLike={handleLike} />
+                          ))}
+                        </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center text-gray-700">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                  className="w-28 h-28 rounded-full bg-indigo-100 flex items-center justify-center mb-6 border border-indigo-200 shadow-lg"
+                >
+                  <FaHeadphones className="text-6xl text-indigo-400" />
+                </motion.div>
+                {isUserBlogs ? (
+                  <div>
+                    <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-3">杩樻病鏈夊彂甯冭繃涔愯瘎</h3>
+                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                      鍒嗕韩浣犲鍠滅埍闊充箰鐨勬劅鍙楀拰瑙佽В锛岃鏇村浜轰簡瑙ｄ綘鐨勯煶涔愬搧鍛?                    </p>
+                    <Link href="/blog/create?type=music">
+                      <motion.button 
+                        whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(110, 0, 255, 0.3)" }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium flex items-center mx-auto shadow-lg"
+                      >
+                        <FaPlay className="mr-2" /> 鍐欑涓€绡囦箰璇?                      </motion.button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div>
+                    <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-3">娌℃湁鎵惧埌鐩稿叧涔愯瘎</h3>
+                    <p className="text-gray-600 max-w-md mx-auto">
+                      灏濊瘯璋冩暣绛涢€夋潯浠舵垨鎼滅储鍏抽敭璇嶏紝鍙戠幇鏇村绮惧僵鍐呭
+                    </p>
+                    
+                    <motion.button 
+                      onClick={() => {
+                        setSearchTerm("");
+                        setSelectedGenre(null);
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="mt-6 px-6 py-2 bg-indigo-100 rounded-full border border-indigo-200 text-indigo-600 flex items-center mx-auto"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                  閲嶇疆绛涢€夋潯浠?                    </motion.button>
+                  </div>
+              )}
+            </div>
+          )}
+          </>
+        )}
+        
+        {/* 鎮诞鍒涘缓鎸夐挳 */}
+        <div className="fixed bottom-8 right-8 md:hidden">
+          <Link href="/blog/create?type=music">
+            <motion.button
+              whileHover={{ scale: 1.1, boxShadow: "0 0 25px rgba(110, 72, 170, 0.7)" }}
+              whileTap={{ scale: 0.9 }}
+              className="w-16 h-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg"
+            >
+              <FaPlay className="text-2xl" />
+            </motion.button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+} 

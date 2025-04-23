@@ -8,6 +8,12 @@
         <result column="cover_image_url" property="coverImageUrl"/>
         <result column="summary" property="summary"/>
         <result column="content" property="content"/>
+        <result column="content_type" property="contentType"/>
+        <result column="artist_name" property="artistName"/>
+        <result column="album_name" property="albumName"/>
+        <result column="album_image_url" property="albumImageUrl"/>
+        <result column="content_link" property="contentLink"/>
+        <result column="view_count" property="viewCount"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
     </resultMap>
@@ -31,9 +37,21 @@
         ORDER BY bp.created_at DESC
     </select>
 
+    <select id="findByContentType" resultMap="blogPostResultMap">
+        SELECT * FROM blog_posts WHERE content_type = #{contentType} ORDER BY created_at DESC
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO blog_posts (title, author_id, cover_image_url, summary, content)
-        VALUES (#{title}, #{authorId}, #{coverImageUrl}, #{summary}, #{content})
+        INSERT INTO blog_posts (
+            title, author_id, cover_image_url, summary, content, 
+            content_type, artist_name, album_name, album_image_url, content_link,
+            view_count
+        )
+        VALUES (
+            #{title}, #{authorId}, #{coverImageUrl}, #{summary}, #{content}, 
+            #{contentType}, #{artistName}, #{albumName}, #{albumImageUrl}, #{contentLink},
+            0
+        )
     </insert>
 
     <update id="update">
@@ -42,6 +60,11 @@
             cover_image_url = #{coverImageUrl},
             summary = #{summary},
             content = #{content},
+            content_type = #{contentType},
+            artist_name = #{artistName},
+            album_name = #{albumName},
+            album_image_url = #{albumImageUrl},
+            content_link = #{contentLink},
             updated_at = NOW()
         WHERE id = #{id}
     </update>
@@ -49,12 +72,11 @@
     <delete id="delete">
         DELETE FROM blog_posts WHERE id = #{id}
     </delete>
-
-    <select id="countComments" resultType="int">
-        SELECT COUNT(*) FROM comments WHERE post_id = #{postId}
-    </select>
-
-    <select id="countLikes" resultType="int">
-        SELECT COUNT(*) FROM post_likes WHERE post_id = #{postId}
-    </select>
+    
+    <update id="updateViewCount">
+        UPDATE blog_posts
+        SET view_count = #{viewCount},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>

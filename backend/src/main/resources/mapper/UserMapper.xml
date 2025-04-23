@@ -28,8 +28,8 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO users (username, email, password_hash, avatar_url)
-        VALUES (#{username}, #{email}, #{password}, #{avatar})
+        INSERT INTO users (username, email, password_hash, avatar_url, created_at, updated_at)
+        VALUES (#{username}, #{email}, #{password}, #{avatar}, NOW(), NOW())
     </insert>
 
     <update id="update">

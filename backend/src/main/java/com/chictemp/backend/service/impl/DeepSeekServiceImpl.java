@@ -6,13 +6,23 @@ import com.chictemp.backend.mapper.PostSummaryMapper;
 import com.chictemp.backend.service.BlogPostService;
 import com.chictemp.backend.service.DeepSeekService;
 import com.chictemp.backend.util.DeepSeekClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.time.LocalDateTime;
 
 @Service
 public class DeepSeekServiceImpl implements DeepSeekService {
+
+    private static final Logger logger = LoggerFactory.getLogger(DeepSeekServiceImpl.class);
 
     @Autowired
     private PostSummaryMapper postSummaryMapper;
@@ -22,6 +32,26 @@ public class DeepSeekServiceImpl implements DeepSeekService {
     
     @Autowired
     private DeepSeekClient deepSeekClient;
+
+    @Override
+    public String summarizeBlog(String blogContent) {
+        try {
+            return deepSeekClient.generateSummary(blogContent);
+        } catch (Exception e) {
+            logger.error("调用DeepSeek API生成摘要时出错", e);
+            return "摘要生成失败，请稍后再试";
+        }
+    }
+
+    @Override
+    public String summarizeBlog(String blogContent, Integer maxLength) {
+        try {
+            return deepSeekClient.generateSummary(blogContent, maxLength);
+        } catch (Exception e) {
+            logger.error("调用DeepSeek API生成摘要时出错", e);
+            return "摘要生成失败，请稍后再试";
+        }
+    }
 
     @Override
     public PostSummary generateSummary(Integer postId) {

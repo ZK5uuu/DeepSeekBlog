@@ -45,6 +45,8 @@ public class UserServiceImpl implements UserService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        // 默认使用用户名作为显示名称
+        user.setName(request.getUsername());
 
         userMapper.insert(user);
         return user;
@@ -62,6 +64,28 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findAll() {
         return userMapper.findAll();
+    }
+
+    @Override
+    public User createUser(User user) {
+        // 检查用户名是否已存在
+        if (user.getUsername() != null && userMapper.findByUsername(user.getUsername()) != null) {
+            throw new RuntimeException("用户名已存在");
+        }
+
+        // 检查邮箱是否已存在
+        if (user.getEmail() != null && userMapper.findByEmail(user.getEmail()) != null) {
+            throw new RuntimeException("邮箱已存在");
+        }
+
+        // 如果未设置name，默认使用username
+        if (user.getName() == null) {
+            user.setName(user.getUsername());
+        }
+
+        // 插入用户
+        userMapper.insert(user);
+        return user;
     }
 
     @Override
