@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chictemp.backend.mapper.PostSummaryMapper">
+    <resultMap id="postSummaryResultMap" type="com.chictemp.backend.entity.PostSummary">
+        <id column="id" property="id"/>
+        <result column="post_id" property="postId"/>
+        <result column="content" property="content"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="postSummaryResultMap">
+        SELECT * FROM post_summaries WHERE id = #{id}
+    </select>
+
+    <select id="findByPostId" resultMap="postSummaryResultMap">
+        SELECT * FROM post_summaries WHERE post_id = #{postId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post_summaries (post_id, content)
+        VALUES (#{postId}, #{content})
+    </insert>
+
+    <update id="update">
+        UPDATE post_summaries
+        SET content = #{content},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM post_summaries WHERE id = #{id}
+    </delete>
+</mapper>

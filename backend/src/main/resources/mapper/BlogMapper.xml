@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chictemp.backend.mapper.BlogMapper">
+    <resultMap id="blogResultMap" type="com.chictemp.backend.entity.Blog">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="album_name" property="albumName"/>
+        <result column="content" property="content"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="modify_time" property="modifyTime"/>
+        <result column="opus" property="opus"/>
+        <result column="album" property="album"/>
+        <result column="ai_contend" property="aiContend"/>
+    </resultMap>
+
+    <select id="findById" resultMap="blogResultMap">
+        SELECT * FROM blog WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="blogResultMap">
+        SELECT * FROM blog ORDER BY created_time DESC
+    </select>
+
+    <insert id="insert" parameterType="Blog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO blog (
+            user_name, artist_name, content,
+            created_time, modify_time, opus,
+            album, ai_contend
+        )
+        VALUES (
+            #{userName}, #{artistName}, #{content}, #{createdTime}, #{modifyTime}, #{opus},
+            #{album}, #{aiContend}
+        )
+    </insert>
+
+    <update id="update" parameterType="Blog">
+        UPDATE blog
+        <set>
+            <if test="userName != null">user_name = #{userName},</if>
+            <if test="artistName != null">artist_name = #{artistName},</if>
+            <if test="content != null">content = #{content},</if>
+            modify_time = #{modifyTime},
+            <if test="opus != null">opus = #{opus},</if>
+            <if test="album != null">album = #{album},</if>
+            <if test="aiContend != null">ai_content = #{aiContend}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM blog WHERE id = #{id}
+    </delete>
+
+</mapper> 

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chictemp.backend.mapper.MusicStyleMapper">
+    <resultMap id="musicStyleResultMap" type="com.chictemp.backend.entity.MusicStyle">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="musicStyleResultMap">
+        SELECT * FROM music_styles ORDER BY id
+    </select>
+
+    <select id="findById" resultMap="musicStyleResultMap">
+        SELECT * FROM music_styles WHERE id = #{id}
+    </select>
+    
+    <select id="findByName" resultMap="musicStyleResultMap">
+        SELECT * FROM music_styles WHERE name = #{name}
+    </select>
+    
+    <select id="findByMusicBlogId" resultMap="musicStyleResultMap">
+        SELECT ms.* FROM music_styles ms
+        JOIN music_blog_styles mbs ON ms.id = mbs.style_id
+        WHERE mbs.music_blog_id = #{musicBlogId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO music_styles (name) VALUES (#{name})
+    </insert>
+
+    <update id="update">
+        UPDATE music_styles SET name = #{name} WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM music_styles WHERE id = #{id}
+    </delete>
+    
+    <insert id="insertRelation">
+        INSERT INTO music_blog_styles (music_blog_id, style_id) 
+        VALUES (#{param1}, #{param2})
+    </insert>
+    
+    <delete id="deleteRelationByMusicBlogId">
+        DELETE FROM music_blog_styles WHERE music_blog_id = #{musicBlogId}
+    </delete>
+</mapper> 

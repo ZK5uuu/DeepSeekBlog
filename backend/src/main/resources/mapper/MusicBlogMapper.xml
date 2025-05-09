@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chictemp.backend.mapper.MusicBlogMapper">
+    <resultMap id="musicBlogResultMap" type="com.chictemp.backend.entity.MusicBlog">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="cover_image_url" property="coverImageUrl"/>
+        <result column="content" property="content"/>
+        <result column="artist_name" property="artistName"/>
+        <result column="album_name" property="albumName"/>
+        <result column="album_image_url" property="albumImageUrl"/>
+        <result column="content_link" property="contentLink"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="username" property="username"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="musicBlogResultMap">
+        SELECT * FROM music_blogs WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="musicBlogResultMap">
+        SELECT * FROM music_blogs ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO music_blogs (
+            title, cover_image_url, content, 
+            artist_name, album_name, album_image_url, content_link,
+            view_count, like_count, username
+        )
+        VALUES (
+            #{title}, #{coverImageUrl}, #{content}, 
+            #{artistName}, #{albumName}, #{albumImageUrl}, #{contentLink},
+            #{viewCount}, #{likeCount}, #{username}
+        )
+    </insert>
+
+    <update id="update">
+<!--        UPDATE music_blogs-->
+<!--        SET title = #{title},-->
+<!--            cover_image_url = #{coverImageUrl},-->
+<!--            content = #{content},-->
+<!--            artist_name = #{artistName},-->
+<!--            album_name = #{albumName},-->
+<!--            album_image_url = #{albumImageUrl},-->
+<!--            content_link = #{contentLink},-->
+<!--            username = #{username},-->
+<!--            updated_at = NOW()-->
+<!--        WHERE id = #{id}-->
+        UPDATE music_blogs
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="coverImageUrl != null">cover_image_url = #{coverImageUrl},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="artistName != null">artist_name = #{artistName},</if>
+            <if test="albumName != null">album_name = #{albumName},</if>
+            <if test="albumImageUrl != null">album_image_url = #{albumImageUrl},</if>
+            <if test="contentLink != null">content_link = #{contentLink},</if>
+            <if test="username != null">username = #{username},</if>
+            updated_at = CURRENT_TIMESTAMP <!-- 统一时间更新 -->
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM music_blogs WHERE id = #{id}
+    </delete>
+    
+    <update id="updateViewCount">
+        UPDATE music_blogs
+        SET view_count = #{viewCount},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <update id="updateLikeCount">
+        UPDATE music_blogs
+        SET like_count = #{likeCount},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper> 

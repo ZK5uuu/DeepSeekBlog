@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chictemp.backend.mapper.PostTagMapper">
+    <resultMap id="postTagResultMap" type="com.chictemp.backend.entity.PostTag">
+        <id column="id" property="id"/>
+        <result column="post_id" property="postId"/>
+        <result column="tag_id" property="tagId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post_tags (post_id, tag_id) 
+        VALUES (#{postId}, #{tagId})
+    </insert>
+
+    <insert id="insertRelation">
+        INSERT INTO post_tags (post_id, tag_id) 
+        VALUES (#{postId}, #{tagId})
+    </insert>
+
+    <delete id="deleteByPostId">
+        DELETE FROM post_tags WHERE post_id = #{postId}
+    </delete>
+
+    <delete id="deleteByTagId">
+        DELETE FROM post_tags WHERE tag_id = #{tagId}
+    </delete>
+
+    <select id="findByPostId" resultMap="postTagResultMap">
+        SELECT * FROM post_tags WHERE post_id = #{postId}
+    </select>
+
+    <select id="findByTagId" resultMap="postTagResultMap">
+        SELECT * FROM post_tags WHERE tag_id = #{tagId}
+    </select>
+</mapper>

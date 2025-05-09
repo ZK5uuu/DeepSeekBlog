@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chictemp.backend.mapper.UserMapper">
+    
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chictemp.backend.entity.User">
+        <id column="id" property="id" />
+        <result column="user_name" property="username" />
+        <result column="nick_name" property="nickName" />
+        <result column="password" property="password" />
+        <result column="email" property="email" />
+<!--        <result column="role" property="role" />-->
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="status" property="status" />
+    </resultMap>
+    
+    <!-- 公共列 -->
+    <sql id="Base_Column_List">
+        id, user_name, nick_name, role, password, email, create_time, update_time, status
+    </sql>
+    
+    <!-- 根据ID查询 -->
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM user
+        WHERE id = #{id}
+    </select>
+    
+    <!-- 根据用户名查询 -->
+    <select id="findByUsername" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM user
+        WHERE user_name = #{username}
+    </select>
+    
+    <!-- 根据邮箱查询 -->
+    <select id="findByEmail" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM user
+        WHERE email = #{email}
+    </select>
+    
+    <!-- 根据用户名和密码查询 -->
+    <select id="findByUsernameAndPassword" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM user
+        WHERE user_name = #{username} AND password = #{password}
+    </select>
+    
+    <!-- 查询所有用户 -->
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM user
+    </select>
+    
+    <!-- 查询用户总数 -->
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM user
+    </select>
+    
+    <!-- 插入用户 -->
+    <insert id="insert" parameterType="com.chictemp.backend.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (user_name, nick_name, password, email, create_time, update_time)
+        VALUES (#{username}, #{username}, #{password}, #{email}, NOW(), NOW())
+    </insert>
+    
+    <!-- 更新用户 -->
+    <update id="update" parameterType="com.chictemp.backend.entity.User">
+        UPDATE user
+        <set>
+            <if test="username != null">user_name = #{username},</if>
+            <if test="nickName != null">nick_name = #{nickName},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="email != null">email = #{email},</if>
+<!--            <if test="role != null">role = #{role},</if>-->
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除用户 -->
+    <delete id="deleteById">
+        DELETE FROM user WHERE id = #{id}
+    </delete>
+</mapper>

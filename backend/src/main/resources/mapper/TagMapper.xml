@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chictemp.backend.mapper.TagMapper">
+    <resultMap id="tagResultMap" type="com.chictemp.backend.entity.Tag">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="tagResultMap">
+        SELECT * FROM tags ORDER BY name ASC
+    </select>
+
+    <select id="findById" resultMap="tagResultMap">
+        SELECT * FROM tags WHERE id = #{id}
+    </select>
+
+    <select id="findByName" resultMap="tagResultMap">
+        SELECT * FROM tags WHERE name = #{name}
+    </select>
+
+    <select id="findByPostId" resultMap="tagResultMap">
+        SELECT t.* FROM tags t
+        JOIN post_tags pt ON t.id = pt.tag_id
+        WHERE pt.post_id = #{postId}
+        ORDER BY t.name ASC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tags (name)
+        VALUES (#{name})
+    </insert>
+
+    <update id="update">
+        UPDATE tags
+        SET name = #{name}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM tags WHERE id = #{id}
+    </delete>
+
+    <select id="findPopular" resultMap="tagResultMap">
+        SELECT t.*, COUNT(pt.post_id) as post_count
+        FROM tags t
+        JOIN post_tags pt ON t.id = pt.tag_id
+        GROUP BY t.id
+        ORDER BY post_count DESC
+        LIMIT #{limit}
+    </select>
+</mapper>
